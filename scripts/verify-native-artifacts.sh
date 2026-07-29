@@ -27,15 +27,27 @@ verify_macos_linkage() {
 }
 
 [[ -f "${bridge}" ]] || fail "missing ${bridge}"
-for runtime in libstdc++.a libgcc.a libgcc_eh.a; do
+runtime_archives=(libstdc++.a libgcc.a libgcc_eh.a)
+if [[ "${target}" == "mingwX64" ]]; then
+    runtime_archives+=(libmingwex.a)
+fi
+for runtime in "${runtime_archives[@]}"; do
     [[ ! -e "${artifact_dir}/${runtime}" ]] ||
         fail "${runtime} must be folded into libanitomy-bridge.a"
 done
 
-if [[ "${target}" != "macosArm64" ]]; then
+if [[ "${target}" == "linuxX64" || "${target}" == "linuxArm64" ]]; then
     bridge_members="$(ar t "${bridge}")"
     [[ "${bridge_members}" == "anitomy_bridge_portable.o" ]] ||
         fail "portable bridge must contain only anitomy_bridge_portable.o"
+    [[ "$(objdump -h "${bridge}")" == *".debug_"* ]] &&
+        fail "${bridge} contains debug sections"
+elif [[ "${target}" == "mingwX64" ]]; then
+    bridge_members="$(ar t "${bridge}")"
+    printf '%s\n' "${bridge_members}" | grep -qx "anitomy_bridge.cpp.obj" ||
+        fail "portable bridge does not contain anitomy_bridge.cpp.obj"
+    printf '%s\n' "${bridge_members}" | grep -qx "mingw_import_shims.cpp.obj" ||
+        fail "portable bridge does not contain mingw_import_shims.cpp.obj"
     [[ "$(objdump -h "${bridge}")" == *".debug_"* ]] &&
         fail "${bridge} contains debug sections"
 fi

@@ -22,6 +22,9 @@ option(ANITOMY_KMP_STRIP_JNI "Strip debug and unneeded symbols from the JNI libr
 add_library(anitomy-bridge STATIC
     src/anitomy_bridge.cpp
 )
+if(MINGW)
+    target_sources(anitomy-bridge PRIVATE src/mingw_import_shims.cpp)
+endif()
 
 target_compile_features(anitomy-bridge PUBLIC cxx_std_23)
 target_include_directories(anitomy-bridge
@@ -91,7 +94,7 @@ if(ANITOMY_KMP_BUILD_JNI)
         if(MINGW)
             target_link_options(anitomy-kmp-jni PRIVATE -static)
         elseif(APPLE)
-            target_link_options(anitomy-kmp-jni PRIVATE -nodefaultrpaths)
+            target_link_options(anitomy-kmp-jni PRIVATE -nodefaultexport -nodefaultrpaths)
         endif()
     endif()
     if(APPLE)
@@ -137,6 +140,10 @@ if(ANITOMY_KMP_BUNDLE_CPP_RUNTIME)
     endif()
 
     set(ANITOMY_KMP_RUNTIME_LIBRARY_NAMES libstdc++.a libgcc.a libgcc_eh.a)
+    if(MINGW)
+        # Modern MinGW provides stack-protector support in its extended CRT archive.
+        list(APPEND ANITOMY_KMP_RUNTIME_LIBRARY_NAMES libmingwex.a)
+    endif()
     set(ANITOMY_KMP_RUNTIME_LIBRARIES)
 
     foreach(RUNTIME_LIBRARY IN LISTS ANITOMY_KMP_RUNTIME_LIBRARY_NAMES)
@@ -171,6 +178,30 @@ if(ANITOMY_KMP_BUNDLE_CPP_RUNTIME)
             DEPENDS
                 anitomy-bridge
                 ${ANITOMY_KMP_RUNTIME_LIBRARIES}
+            COMMAND_EXPAND_LISTS
+            VERBATIM
+        )
+    elseif(MINGW)
+        set(
+            ANITOMY_KMP_ARCHIVES_TO_MERGE
+            "$<TARGET_FILE:anitomy-bridge>"
+            ${ANITOMY_KMP_RUNTIME_LIBRARIES}
+        )
+        list(JOIN ANITOMY_KMP_ARCHIVES_TO_MERGE "|" ANITOMY_KMP_MERGE_INPUTS)
+        add_custom_command(
+            OUTPUT "${ANITOMY_KMP_PORTABLE_ARCHIVE}"
+            COMMAND
+                ${CMAKE_COMMAND}
+                "-DARCHIVER=${CMAKE_AR}"
+                "-DOUTPUT=${ANITOMY_KMP_PORTABLE_ARCHIVE}"
+                "-DINPUTS=${ANITOMY_KMP_MERGE_INPUTS}"
+                -P
+                "${CMAKE_CURRENT_LIST_DIR}/cmake/merge-static-archives.cmake"
+            COMMAND ${CMAKE_STRIP} --strip-debug "${ANITOMY_KMP_PORTABLE_ARCHIVE}"
+            DEPENDS
+                anitomy-bridge
+                ${ANITOMY_KMP_RUNTIME_LIBRARIES}
+                "${CMAKE_CURRENT_LIST_DIR}/cmake/merge-static-archives.cmake"
             COMMAND_EXPAND_LISTS
             VERBATIM
         )

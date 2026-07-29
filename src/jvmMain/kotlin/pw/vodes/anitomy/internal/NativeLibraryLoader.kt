@@ -13,6 +13,7 @@ import java.util.HexFormat
 internal object NativeLibraryLoader {
     private const val WORK_DIRECTORY_PROPERTY = "pw.vodes.anitomy.native.workdir"
     private val ownerDirectoryPermissions = PosixFilePermissions.fromString("rwx------")
+    private val preparationLock = Any()
 
     fun load() {
         val platform = detectPlatform()
@@ -49,7 +50,7 @@ internal object NativeLibraryLoader {
         libraryBytes: ByteArray,
         libraryName: String,
         workDirectory: Path,
-    ): Path {
+    ): Path = synchronized(preparationLock) {
         val expectedDigest = sha256(libraryBytes)
         val digestName = HexFormat.of().formatHex(expectedDigest)
         val cacheRoot = workDirectory.toAbsolutePath().normalize().resolve("anitomy-kmp")
@@ -66,7 +67,7 @@ internal object NativeLibraryLoader {
         check(hasDigest(library, expectedDigest)) {
             "The extracted Anitomy native library failed SHA-256 validation: $library"
         }
-        return library
+        library
     }
 
     private fun configuredWorkDirectory(): Path {
