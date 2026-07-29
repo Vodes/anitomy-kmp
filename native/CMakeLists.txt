@@ -9,6 +9,11 @@ project(
 option(ANITOMY_KMP_BUILD_JNI "Build the JNI shared library" ON)
 option(ANITOMY_KMP_BUILD_TESTS "Build native bridge tests" ON)
 option(
+    ANITOMY_KMP_STATIC_JNI_RUNTIME
+    "Link the GNU C++ runtime into the JNI library instead of requiring it at runtime"
+    OFF
+)
+option(
     ANITOMY_KMP_BUNDLE_CPP_RUNTIME
     "Copy static GNU C++ runtime archives beside the bridge for Kotlin/Native"
     OFF
@@ -37,6 +42,10 @@ else()
     target_compile_options(anitomy-bridge PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+if(ANITOMY_KMP_BUNDLE_CPP_RUNTIME AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_compile_definitions(anitomy-bridge PRIVATE ANITOMY_KMP_OLD_GLIBC_COMPAT=1)
+endif()
+
 if(ANITOMY_KMP_BUILD_JNI)
     find_package(JNI REQUIRED)
 
@@ -55,17 +64,20 @@ if(ANITOMY_KMP_BUILD_JNI)
     if(WIN32)
         set_target_properties(anitomy-kmp-jni PROPERTIES PREFIX "")
     endif()
+    if(ANITOMY_KMP_STATIC_JNI_RUNTIME AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_link_options(anitomy-kmp-jni PRIVATE -static-libgcc -static-libstdc++)
+        if(MINGW)
+            target_link_options(anitomy-kmp-jni PRIVATE -static)
+        endif()
+    endif()
 endif()
 
 if(ANITOMY_KMP_BUNDLE_CPP_RUNTIME)
-    if(APPLE OR MSVC)
-        message(FATAL_ERROR "Static GNU C++ runtime bundling is only for GNU-compatible targets")
+    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        message(FATAL_ERROR "Kotlin/Native runtime bundling requires the GNU C++ toolchain")
     endif()
 
     set(ANITOMY_KMP_RUNTIME_LIBRARIES libstdc++.a libgcc.a libgcc_eh.a)
-    if(MINGW)
-        list(APPEND ANITOMY_KMP_RUNTIME_LIBRARIES libwinpthread.a)
-    endif()
 
     foreach(RUNTIME_LIBRARY IN LISTS ANITOMY_KMP_RUNTIME_LIBRARIES)
         execute_process(

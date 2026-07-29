@@ -11,7 +11,7 @@
 #include <anitomy/element.hpp>
 #include <anitomy/options.hpp>
 
-#if defined(__linux__)
+#if defined(ANITOMY_KMP_OLD_GLIBC_COMPAT)
 // Modern libstdc++ uses this glibc optimization marker. Kotlin/Native's intentionally old Linux
 // sysroot predates it, so define the conservative multi-threaded value in the final executable.
 extern "C" {

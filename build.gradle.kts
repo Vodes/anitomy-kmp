@@ -1,3 +1,4 @@
+import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
 import org.gradle.language.jvm.tasks.ProcessResources
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
@@ -37,7 +38,11 @@ val hostJniLibraryName =
         hostIsMacOs -> "libanitomy-kmp.dylib"
         else -> "libanitomy-kmp.so"
     }
-val hostStaticLibraryName = if (hostIsWindows) "anitomy-bridge.lib" else "libanitomy-bridge.a"
+val hostStaticLibraryName = "libanitomy-bridge.a"
+val hostCxxCompiler =
+    providers.gradleProperty("anitomy.hostCxxCompiler").getOrElse(
+        if (hostIsMacOs) "clang++" else "g++",
+    )
 
 val hostNativeBuildDirectory = layout.buildDirectory.dir("native/host")
 val configureHostNative by tasks.registering(Exec::class) {
@@ -59,8 +64,10 @@ val configureHostNative by tasks.registering(Exec::class) {
         "-B",
         hostNativeBuildDirectory.get().asFile.absolutePath,
         "-DCMAKE_BUILD_TYPE=Release",
+        "-DCMAKE_CXX_COMPILER=$hostCxxCompiler",
         "-DANITOMY_KMP_BUILD_JNI=ON",
         "-DANITOMY_KMP_BUILD_TESTS=OFF",
+        "-DANITOMY_KMP_STATIC_JNI_RUNTIME=OFF",
     )
 }
 
@@ -85,6 +92,19 @@ val buildHostNative by tasks.registering(Exec::class) {
     )
 }
 
+val stagedJvmNatives = layout.buildDirectory.dir("staged/jvmNatives")
+val stageHostJvmNative by tasks.registering(Sync::class) {
+    group = "native"
+    description = "Stages the current host JNI library in the release directory layout."
+    dependsOn(buildHostNative)
+    into(stagedJvmNatives)
+    if (hostResourceDirectory != null) {
+        from(hostNativeBuildDirectory.map { it.file(hostJniLibraryName) }) {
+            into(hostResourceDirectory)
+        }
+    }
+}
+
 val generatedJvmResources = layout.buildDirectory.dir("generated/jvmResources")
 val prepareJvmNativeResources by tasks.registering(Sync::class) {
     group = "native"
@@ -93,7 +113,9 @@ val prepareJvmNativeResources by tasks.registering(Sync::class) {
 
     val prebuiltDirectory = providers.gradleProperty("anitomy.jvmNativesDir")
     if (prebuiltDirectory.isPresent) {
-        from(prebuiltDirectory)
+        from(prebuiltDirectory) {
+            into("META-INF/anitomy-kmp")
+        }
     } else if (hostResourceDirectory != null) {
         dependsOn(buildHostNative)
         from(hostNativeBuildDirectory.map { it.file(hostJniLibraryName) }) {
@@ -132,15 +154,14 @@ kotlin {
             } else {
                 defaultLibrary.get().asFile.parentFile
             }
-        val bridgeLibrary =
-            if (nativeTarget == "mingwX64") "libanitomy-bridge.a" else "libanitomy-bridge.a"
+        val bridgeLibrary = "libanitomy-bridge.a"
         val bundledRuntimeLibraries =
             when {
                 !prebuiltDirectory.isPresent -> emptyList()
                 nativeTarget.startsWith("linux") ->
                     listOf("libstdc++.a", "libgcc.a", "libgcc_eh.a")
                 nativeTarget == "mingwX64" ->
-                    listOf("libstdc++.a", "libgcc.a", "libgcc_eh.a", "libwinpthread.a")
+                    listOf("libstdc++.a", "libgcc.a", "libgcc_eh.a")
                 else -> emptyList()
             }
 
@@ -171,10 +192,28 @@ kotlin {
     }
 }
 
-if (hostNativeTarget != null) {
-    val hostCInteropTask = "cinteropAnitomy${hostNativeTarget.replaceFirstChar(Char::uppercase)}"
-    tasks.matching { it.name == hostCInteropTask }.configureEach {
-        dependsOn(buildHostNative)
+listOf("linuxX64", "linuxArm64", "mingwX64", "macosArm64").forEach { nativeTarget ->
+    val cinteropTask = "cinteropAnitomy${nativeTarget.replaceFirstChar(Char::uppercase)}"
+    val prebuiltDirectory =
+        providers.gradleProperty("anitomy.nativeLibraryDir.$nativeTarget")
+    val canUseHostBridgeWithoutBundledRuntime =
+        nativeTarget == hostNativeTarget && nativeTarget == "macosArm64"
+
+    tasks.matching { it.name == cinteropTask }.configureEach {
+        if (prebuiltDirectory.isPresent) {
+            return@configureEach
+        }
+        if (canUseHostBridgeWithoutBundledRuntime) {
+            dependsOn(buildHostNative)
+        } else {
+            doFirst {
+                throw GradleException(
+                    "Kotlin/Native target '$nativeTarget' requires the portable bridge directory. " +
+                        "Build it with scripts/build-native.sh and pass " +
+                        "-Panitomy.nativeLibraryDir.$nativeTarget=<directory>.",
+                )
+            }
+        }
     }
 }
 
@@ -221,6 +260,32 @@ publishing {
                 connection.set("scm:git:https://github.com/Vodes/anitomy-kmp.git")
                 developerConnection.set("scm:git:ssh://git@github.com/Vodes/anitomy-kmp.git")
             }
+        }
+    }
+}
+
+val versionTag = Regex("""v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?""")
+val tagsAtHead =
+    providers.exec {
+        commandLine("git", "tag", "--points-at", "HEAD")
+        isIgnoreExitValue = true
+    }.standardOutput.asText
+
+tasks.withType<PublishToMavenRepository>().configureEach {
+    doFirst {
+        val releaseTags =
+            tagsAtHead
+                .get()
+                .lineSequence()
+                .map(String::trim)
+                .filter(versionTag::matches)
+                .toList()
+        require(releaseTags.size == 1) {
+            "Remote publication requires exactly one vX.Y.Z tag at HEAD; found $releaseTags"
+        }
+        val tagVersion = releaseTags.single().removePrefix("v")
+        require(project.version.toString() == tagVersion) {
+            "releaseVersion '${project.version}' must match tag '${releaseTags.single()}'"
         }
     }
 }
