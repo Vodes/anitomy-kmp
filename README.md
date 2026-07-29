@@ -53,7 +53,10 @@ all ten switches supported by Anitomy v2.
 | `macosArm64` | Apple Silicon macOS | Static C ABI bridge |
 
 The JVM and JVM bytecode target Java 17. On the JVM, the platform library is
-extracted to a SHA-256-addressed directory below `java.io.tmpdir` and loaded once.
+validated and extracted to a SHA-256-addressed directory below `java.io.tmpdir`,
+then loaded once. Set `-Dpw.vodes.anitomy.native.workdir=<directory>` to use a
+different extraction filesystem, for example when the system temporary directory
+is read-only or mounted with `noexec`.
 
 ## Build
 
