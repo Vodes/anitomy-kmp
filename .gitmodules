@@ -1,0 +1,4 @@
+[submodule "vendor/anitomy"]
+	path = vendor/anitomy
+	url = https://github.com/erengy/anitomy.git
+	branch = develop
