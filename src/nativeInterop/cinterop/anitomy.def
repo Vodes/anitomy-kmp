@@ -1,0 +1,8 @@
+headers = anitomy_bridge.h
+headerFilter = anitomy_bridge.h
+package = pw.vodes.anitomy.cinterop
+noStringConversion = anitomy_parse_utf8
+nonStrictEnums = anitomy_element_kind anitomy_option
+linkerOpts.linux = -lstdc++
+linkerOpts.mingw = -lstdc++
+linkerOpts.osx = -lc++

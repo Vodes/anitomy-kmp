@@ -37,12 +37,12 @@ val hostJniLibraryName =
         hostIsMacOs -> "libanitomy-kmp.dylib"
         else -> "libanitomy-kmp.so"
     }
+val hostStaticLibraryName = if (hostIsWindows) "anitomy-bridge.lib" else "libanitomy-bridge.a"
 
 val hostNativeBuildDirectory = layout.buildDirectory.dir("native/host")
 val configureHostNative by tasks.registering(Exec::class) {
     group = "native"
     description = "Configures the native Anitomy bridge for the current host."
-    onlyIf { hostNativeTarget != null }
 
     inputs.files(
         fileTree("native") {
@@ -68,14 +68,11 @@ val buildHostNative by tasks.registering(Exec::class) {
     group = "native"
     description = "Builds the native Anitomy bridge and JNI library for the current host."
     dependsOn(configureHostNative)
-    onlyIf { hostNativeTarget != null }
 
     inputs.file(hostNativeBuildDirectory.map { it.file("CMakeCache.txt") })
     outputs.files(
         hostNativeBuildDirectory.map { it.file(hostJniLibraryName) },
-        hostNativeBuildDirectory.map {
-            it.file(if (hostIsWindows) "anitomy-bridge.lib" else "libanitomy-bridge.a")
-        },
+        hostNativeBuildDirectory.map { it.file(hostStaticLibraryName) },
     )
 
     commandLine(
@@ -127,7 +124,7 @@ kotlin {
         val prebuiltLibrary = providers.gradleProperty(propertyName)
         val defaultLibrary =
             hostNativeBuildDirectory.map {
-                it.file(if (hostIsWindows) "anitomy-bridge.lib" else "libanitomy-bridge.a")
+                it.file(hostStaticLibraryName)
             }
         val libraryFile =
             if (prebuiltLibrary.isPresent) {
@@ -145,10 +142,6 @@ kotlin {
                 "-staticLibrary",
                 libraryFile.name,
             )
-
-            if (!prebuiltLibrary.isPresent && nativeTarget == hostNativeTarget) {
-                interopProcessingTask.dependsOn(buildHostNative)
-            }
         }
     }
 
@@ -161,6 +154,13 @@ kotlin {
         jvmMain {
             resources.srcDir(generatedJvmResources)
         }
+    }
+}
+
+if (hostNativeTarget != null) {
+    val hostCInteropTask = "cinteropAnitomy${hostNativeTarget.replaceFirstChar(Char::uppercase)}"
+    tasks.matching { it.name == hostCInteropTask }.configureEach {
+        dependsOn(buildHostNative)
     }
 }
 
