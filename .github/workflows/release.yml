@@ -90,7 +90,7 @@ jobs:
           if-no-files-found: error
 
   windows-artifacts:
-    name: mingwX64 release artifacts
+    name: Windows x64 JVM artifact
     needs: version
     runs-on: windows-2025
     steps:
@@ -110,24 +110,22 @@ jobs:
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-ninja
-      - name: Build MinGW archive and JNI library
+      - name: Build Windows JNI library
         shell: msys2 {0}
         run: |
           export JAVA_HOME="$(cygpath -u "$JAVA_HOME")"
-          ANITOMY_BUILD_JNI=ON CXX=g++ scripts/build-native.sh mingwX64
+          ANITOMY_BUILD_JNI=ON CXX=g++ scripts/build-native.sh windowsX64
       - name: Stage release files
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force build/release/native/mingwX64
           New-Item -ItemType Directory -Force build/release/jvm/windows-x64
-          Copy-Item build/native/mingwX64/libanitomy-bridge.a build/release/native/mingwX64/
-          Copy-Item build/native/mingwX64/anitomy-kmp.dll build/release/jvm/windows-x64/
-      - name: Verify native artifact structure
+          Copy-Item build/native/windowsX64/anitomy-kmp.dll build/release/jvm/windows-x64/
+      - name: Verify JNI artifact structure
         shell: msys2 {0}
-        run: scripts/verify-native-artifacts.sh mingwX64 build/native/mingwX64
+        run: scripts/verify-native-artifacts.sh windowsX64 build/native/windowsX64
       - uses: actions/upload-artifact@v4
         with:
-          name: release-mingwX64
+          name: release-windowsX64
           path: build/release
           if-no-files-found: error
 
@@ -166,7 +164,7 @@ jobs:
           if-no-files-found: error
 
   publish-main:
-    name: Publish root, JVM, Linux, and Windows modules
+    name: Publish root, JVM, and Linux modules
     needs:
       - version
       - linux-artifacts
@@ -199,12 +197,10 @@ jobs:
             publishJvmPublicationToStyxRepository \
             publishLinuxX64PublicationToStyxRepository \
             publishLinuxArm64PublicationToStyxRepository \
-            publishMingwX64PublicationToStyxRepository \
             "-PreleaseVersion=${VERSION}" \
             -Panitomy.jvmNativesDir=build/release/jvm \
             -Panitomy.nativeLibraryDir.linuxX64=build/release/native/linuxX64 \
-            -Panitomy.nativeLibraryDir.linuxArm64=build/release/native/linuxArm64 \
-            -Panitomy.nativeLibraryDir.mingwX64=build/release/native/mingwX64
+            -Panitomy.nativeLibraryDir.linuxArm64=build/release/native/linuxArm64
 
   publish-macos:
     name: Publish macOS ARM64 module

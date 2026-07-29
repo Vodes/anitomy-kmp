@@ -123,8 +123,8 @@ jobs:
             -L build/native/linuxArm64/sysroot \
             build/bin/linuxArm64/debugTest/test.kexe
 
-  windows-native:
-    name: mingwX64
+  windows-jvm:
+    name: Windows x64 JVM
     runs-on: windows-2025
     steps:
       - uses: actions/checkout@v5
@@ -143,27 +143,24 @@ jobs:
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-ninja
-      - name: Build MinGW native archive
+      - name: Build Windows JNI library
         shell: msys2 {0}
         run: |
           export JAVA_HOME="$(cygpath -u "$JAVA_HOME")"
-          ANITOMY_BUILD_JNI=ON CXX=g++ scripts/build-native.sh mingwX64
+          ANITOMY_BUILD_JNI=ON CXX=g++ scripts/build-native.sh windowsX64
       - name: Stage Windows JNI library
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force build/ci-jvm/windows-x64
-          Copy-Item build/native/mingwX64/anitomy-kmp.dll build/ci-jvm/windows-x64/
-      - name: Test Kotlin/Native and JVM bindings
+          Copy-Item build/native/windowsX64/anitomy-kmp.dll build/ci-jvm/windows-x64/
+      - name: Test JVM bindings
         shell: pwsh
         env:
-          ORG_GRADLE_PROJECT_anitomy.nativeLibraryDir.mingwX64: build/native/mingwX64
           ORG_GRADLE_PROJECT_anitomy.jvmNativesDir: build/ci-jvm
-        run: ./gradlew.bat mingwX64Test jvmTest --no-daemon
-      - name: Verify native artifact structure
+        run: ./gradlew.bat jvmTest --no-daemon
+      - name: Verify JNI artifact structure
         shell: msys2 {0}
-        run: >-
-          scripts/verify-native-artifacts.sh mingwX64 build/native/mingwX64
-          --check-cinterop
+        run: scripts/verify-native-artifacts.sh windowsX64 build/native/windowsX64
 
   macos-native:
     name: macosArm64

@@ -49,14 +49,21 @@ all ten switches supported by Anitomy v2.
 | `jvm` | Linux x64/ARM64, Windows x64, macOS ARM64 | Packaged JNI library |
 | `linuxX64` | Linux x64 | Static C ABI bridge |
 | `linuxArm64` | Linux ARM64 | Static C ABI bridge |
-| `mingwX64` | Windows x64 | Static C ABI bridge |
 | `macosArm64` | Apple Silicon macOS | Static C ABI bridge |
 
 The JVM and JVM bytecode target Java 17. On the JVM, the platform library is
 validated and extracted to a SHA-256-addressed directory below `java.io.tmpdir`,
 then loaded once. Set `-Dpw.vodes.anitomy.native.workdir=<directory>` to use a
 different extraction filesystem, for example when the system temporary directory
-is read-only or mounted with `noexec`.
+is read-only or mounted with `noexec`. Windows is supported through this JVM/JNI
+path; a Kotlin/Native `mingwX64` target is not published.
+
+The `mingwX64` bridge was dropped because Kotlin/Native's bundled Clang/LLD
+environment is not ABI-compatible with the current MSYS2 GCC runtime needed by
+Anitomy. Bundling `libstdc++` and `libmingwex` led to conflicting CRT import
+symbols and unresolved functions such as `nanosleep64`, `clock_gettime64`, and
+internal `__msvcrt_*` helpers. The Windows JNI library avoids this mixed-toolchain
+link by being built and linked entirely with MinGW GCC.
 
 ## Build
 
@@ -76,9 +83,10 @@ CXX=g++ scripts/build-native.sh linuxX64
   -Panitomy.nativeLibraryDir.linuxX64=build/native/linuxX64
 ```
 
-For GNU targets, `libanitomy-bridge.a` is self-contained: the build folds the
-required GNU C++ runtime into the bridge archive. Do not package separate
-`libstdc++` or `libgcc` archives with the Kotlin/Native publication.
+For the supported Kotlin/Native targets, `libanitomy-bridge.a` is self-contained:
+the build folds the required GNU C++ runtime into the bridge archive. Do not
+package separate `libstdc++` or `libgcc` archives with the Kotlin/Native
+publication.
 
 Linux Kotlin/Native artifacts must be built with GCC 15.2 and an explicit glibc
 2.17 sysroot. This keeps the bundled C++ runtime compatible with
@@ -94,8 +102,8 @@ ninja=1.13.2
 
 For `linuxArm64`, use the corresponding `gxx_linux-aarch64` and
 `sysroot_linux-aarch64` cross packages and set CMake's system processor to
-`aarch64`. Windows builds use MinGW GCC. Local macOS ARM64 builds require
-Homebrew GCC 15 and Ninja:
+`aarch64`. The Windows JNI library uses MinGW GCC with a statically linked
+runtime. Local macOS ARM64 builds require Homebrew GCC 15 and Ninja:
 
 ```shell
 brew install gcc@15 ninja
@@ -118,11 +126,11 @@ macos-arm64/libanitomy-kmp.dylib
 
 ## Tests
 
-The shared suite runs through both JNI and Kotlin/Native. It covers all public
-element kinds and options, upstream examples, Unicode byte positions, ownership,
-and the Styx downloader regression corpus. The raw Anitomy v2 result is the
-golden behavior; downloader-specific title repair is intentionally not part of
-this binding.
+The shared suite runs through JNI and every published Kotlin/Native target. It
+covers all public element kinds and options, upstream examples, Unicode byte
+positions, ownership, and the Styx downloader regression corpus. The raw Anitomy
+v2 result is the golden behavior; downloader-specific title repair is
+intentionally not part of this binding.
 
 ## Releases
 

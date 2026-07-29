@@ -27,14 +27,12 @@ verify_macos_linkage() {
 }
 
 [[ -f "${bridge}" ]] || fail "missing ${bridge}"
-runtime_archives=(libstdc++.a libgcc.a libgcc_eh.a)
-if [[ "${target}" == "mingwX64" ]]; then
-    runtime_archives+=(libmingwex.a)
+if [[ "${target}" != "windowsX64" ]]; then
+    for runtime in libstdc++.a libgcc.a libgcc_eh.a; do
+        [[ ! -e "${artifact_dir}/${runtime}" ]] ||
+            fail "${runtime} must be folded into libanitomy-bridge.a"
+    done
 fi
-for runtime in "${runtime_archives[@]}"; do
-    [[ ! -e "${artifact_dir}/${runtime}" ]] ||
-        fail "${runtime} must be folded into libanitomy-bridge.a"
-done
 
 if [[ "${target}" == "linuxX64" || "${target}" == "linuxArm64" ]]; then
     bridge_members="$(ar t "${bridge}")"
@@ -42,12 +40,10 @@ if [[ "${target}" == "linuxX64" || "${target}" == "linuxArm64" ]]; then
         fail "portable bridge must contain only anitomy_bridge_portable.o"
     [[ "$(objdump -h "${bridge}")" == *".debug_"* ]] &&
         fail "${bridge} contains debug sections"
-elif [[ "${target}" == "mingwX64" ]]; then
+elif [[ "${target}" == "windowsX64" ]]; then
     bridge_members="$(ar t "${bridge}")"
-    printf '%s\n' "${bridge_members}" | grep -qx "anitomy_bridge.cpp.obj" ||
-        fail "portable bridge does not contain anitomy_bridge.cpp.obj"
-    printf '%s\n' "${bridge_members}" | grep -qx "mingw_import_shims.cpp.obj" ||
-        fail "portable bridge does not contain mingw_import_shims.cpp.obj"
+    [[ "${bridge_members}" == "anitomy_bridge.cpp.obj" ]] ||
+        fail "Windows JNI bridge must contain only anitomy_bridge.cpp.obj"
     [[ "$(objdump -h "${bridge}")" == *".debug_"* ]] &&
         fail "${bridge} contains debug sections"
 fi
@@ -61,13 +57,16 @@ case "${target}" in
             fail "${jni} contains debug sections"
         exports="$(nm -D --defined-only "${jni}" | awk '{print $3}')"
         ;;
-    mingwX64)
+    windowsX64)
         jni="${artifact_dir}/anitomy-kmp.dll"
         [[ -f "${jni}" ]] || fail "missing ${jni}"
         [[ "$(objdump -h "${jni}")" == *".debug_"* ]] &&
             fail "${jni} contains debug sections"
+        imports="$(objdump -p "${jni}")"
+        [[ ! "${imports}" =~ libstdc\+\+-6\.dll|libgcc_s_.*-1\.dll|libwinpthread-1\.dll ]] ||
+            fail "${jni} dynamically depends on the MinGW runtime"
         exports="$(
-            objdump -p "${jni}" |
+            printf '%s\n' "${imports}" |
                 sed -n '/Ordinal\/Name Pointer.*Table/,/^$/p' |
                 awk '/\[[[:space:]]*[0-9]+\]/{print $NF}'
         )"

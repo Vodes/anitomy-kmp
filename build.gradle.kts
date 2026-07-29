@@ -20,7 +20,7 @@ val hostNativeTarget =
     when {
         hostIsLinux && hostArchitecture in setOf("x86_64", "amd64") -> "linuxX64"
         hostIsLinux && hostArchitecture in setOf("aarch64", "arm64") -> "linuxArm64"
-        hostIsWindows && hostArchitecture in setOf("x86_64", "amd64") -> "mingwX64"
+        hostIsWindows && hostArchitecture in setOf("x86_64", "amd64") -> "windowsX64"
         hostIsMacOs && hostArchitecture in setOf("aarch64", "arm64") -> "macosArm64"
         else -> null
     }
@@ -28,7 +28,7 @@ val hostResourceDirectory =
     when (hostNativeTarget) {
         "linuxX64" -> "linux-x64"
         "linuxArm64" -> "linux-arm64"
-        "mingwX64" -> "windows-x64"
+        "windowsX64" -> "windows-x64"
         "macosArm64" -> "macos-arm64"
         else -> null
     }
@@ -44,6 +44,7 @@ val hostCxxCompiler =
         if (hostIsMacOs) "g++-15" else "g++",
     )
 val hostBundlesCppRuntime = hostIsMacOs
+val hostUsesStaticJniRuntime = hostIsWindows || hostIsMacOs
 
 val hostNativeBuildDirectory = layout.buildDirectory.dir("native/host")
 val configureHostNative by tasks.registering(Exec::class) {
@@ -69,7 +70,7 @@ val configureHostNative by tasks.registering(Exec::class) {
         "-DANITOMY_KMP_BUILD_JNI=ON",
         "-DANITOMY_KMP_BUILD_TESTS=OFF",
         "-DANITOMY_KMP_BUNDLE_CPP_RUNTIME=${if (hostBundlesCppRuntime) "ON" else "OFF"}",
-        "-DANITOMY_KMP_STATIC_JNI_RUNTIME=${if (hostBundlesCppRuntime) "ON" else "OFF"}",
+        "-DANITOMY_KMP_STATIC_JNI_RUNTIME=${if (hostUsesStaticJniRuntime) "ON" else "OFF"}",
         "-DANITOMY_KMP_STRIP_JNI=ON",
     )
 }
@@ -127,7 +128,6 @@ kotlin {
 
     linuxX64()
     linuxArm64()
-    mingwX64()
     macosArm64()
 
     targets.withType<KotlinNativeTarget>().configureEach {
@@ -168,7 +168,7 @@ kotlin {
     }
 }
 
-listOf("linuxX64", "linuxArm64", "mingwX64", "macosArm64").forEach { nativeTarget ->
+listOf("linuxX64", "linuxArm64", "macosArm64").forEach { nativeTarget ->
     val cinteropTask = "cinteropAnitomy${nativeTarget.replaceFirstChar(Char::uppercase)}"
     val prebuiltDirectory =
         providers.gradleProperty("anitomy.nativeLibraryDir.$nativeTarget")

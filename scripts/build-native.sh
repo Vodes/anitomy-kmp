@@ -2,14 +2,20 @@
 
 set -euo pipefail
 
-target="${1:?usage: scripts/build-native.sh <linuxX64|linuxArm64|mingwX64|macosArm64>}"
+target="${1:?usage: scripts/build-native.sh <linuxX64|linuxArm64|windowsX64|macosArm64>}"
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 build_dir="${ANITOMY_NATIVE_BUILD_DIR:-${project_dir}/build/native/${target}}"
 
 case "${target}" in
-    linuxX64|linuxArm64|mingwX64|macosArm64)
+    linuxX64|linuxArm64|macosArm64)
         compiler="${CXX:-g++}"
         bundle_runtime=ON
+        static_jni_runtime=ON
+        ;;
+    windowsX64)
+        compiler="${CXX:-g++}"
+        bundle_runtime=OFF
+        static_jni_runtime=ON
         ;;
     *)
         echo "unsupported target: ${target}" >&2
@@ -26,7 +32,7 @@ cmake_args=(
     -DANITOMY_KMP_BUILD_JNI="${ANITOMY_BUILD_JNI:-ON}"
     -DANITOMY_KMP_BUILD_TESTS="${ANITOMY_BUILD_TESTS:-OFF}"
     -DANITOMY_KMP_BUNDLE_CPP_RUNTIME="${bundle_runtime}"
-    -DANITOMY_KMP_STATIC_JNI_RUNTIME="${ANITOMY_STATIC_JNI_RUNTIME:-${bundle_runtime}}"
+    -DANITOMY_KMP_STATIC_JNI_RUNTIME="${ANITOMY_STATIC_JNI_RUNTIME:-${static_jni_runtime}}"
     -DANITOMY_KMP_STRIP_JNI="${ANITOMY_STRIP_JNI:-ON}"
 )
 
@@ -41,4 +47,8 @@ cmake "${cmake_args[@]}"
 cmake --build "${build_dir}" --parallel
 
 echo "Native artifacts: ${build_dir}"
-echo "Gradle property: -Panitomy.nativeLibraryDir.${target}=${build_dir}"
+if [[ "${target}" == "windowsX64" ]]; then
+    echo "JVM library: ${build_dir}/anitomy-kmp.dll"
+else
+    echo "Gradle property: -Panitomy.nativeLibraryDir.${target}=${build_dir}"
+fi
