@@ -7,11 +7,7 @@ project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 build_dir="${ANITOMY_NATIVE_BUILD_DIR:-${project_dir}/build/native/${target}}"
 
 case "${target}" in
-    linuxX64|linuxArm64)
-        compiler="${CXX:-g++}"
-        bundle_runtime=ON
-        ;;
-    mingwX64)
+    linuxX64|linuxArm64|mingwX64)
         compiler="${CXX:-g++}"
         bundle_runtime=ON
         ;;
@@ -35,6 +31,7 @@ cmake_args=(
     -DANITOMY_KMP_BUILD_TESTS="${ANITOMY_BUILD_TESTS:-OFF}"
     -DANITOMY_KMP_BUNDLE_CPP_RUNTIME="${bundle_runtime}"
     -DANITOMY_KMP_STATIC_JNI_RUNTIME="${ANITOMY_STATIC_JNI_RUNTIME:-${bundle_runtime}}"
+    -DANITOMY_KMP_STRIP_JNI="${ANITOMY_STRIP_JNI:-ON}"
 )
 
 if [[ -n "${ANITOMY_CMAKE_SYSTEM_NAME:-}" ]]; then

@@ -34,9 +34,9 @@ internal actual fun parsePlatform(input: String, options: Options): List<Element
     try {
         val count = anitomy_result_count(result).toLong()
         check(count <= Int.MAX_VALUE) { "Anitomy returned too many elements" }
-        return List(count.toInt()) { index ->
-            memScoped {
-                val valueLength = alloc<ULongVar>()
+        return memScoped {
+            val valueLength = alloc<ULongVar>()
+            List(count.toInt()) { index ->
                 val valuePointer =
                     anitomy_result_value(result, index.convert(), valueLength.ptr)
                         ?: error("Anitomy returned a null element value")

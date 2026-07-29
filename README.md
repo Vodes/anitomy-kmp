@@ -73,6 +73,10 @@ CXX=g++ scripts/build-native.sh linuxX64
   -Panitomy.nativeLibraryDir.linuxX64=build/native/linuxX64
 ```
 
+For GNU targets, `libanitomy-bridge.a` is self-contained: the build folds in only
+the C++ runtime objects required by the bridge. Do not package separate
+`libstdc++` or `libgcc` archives with the Kotlin/Native publication.
+
 Linux Kotlin/Native artifacts must be built with GCC 15.2 and an explicit glibc
 2.17 sysroot. This keeps the bundled C++ runtime compatible with
 Kotlin/Native's Linux linker baseline. The CI environment uses these pinned

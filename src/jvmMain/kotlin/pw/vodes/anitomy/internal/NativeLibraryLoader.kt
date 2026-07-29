@@ -2,15 +2,14 @@ package pw.vodes.anitomy.internal
 
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
+import java.util.HexFormat
 
 internal object NativeLibraryLoader {
-    private val supportedPlatform: NativePlatform by lazy(::detectPlatform)
-
-    @Synchronized
     fun load() {
-        val platform = supportedPlatform
+        val platform = detectPlatform()
         val resource = "/META-INF/anitomy-kmp/${platform.directory}/${platform.libraryName}"
         val libraryBytes =
             NativeLibraryLoader::class.java.getResourceAsStream(resource)?.use { it.readBytes() }
@@ -19,12 +18,14 @@ internal object NativeLibraryLoader {
                         "JVM artifact ($resource)",
                 )
         val digest =
-            MessageDigest
-                .getInstance("SHA-256")
-                .digest(libraryBytes)
-                .joinToString("") { byte -> "%02x".format(byte) }
+            HexFormat.of().formatHex(
+                MessageDigest
+                    .getInstance("SHA-256")
+                    .digest(libraryBytes),
+            )
         val directory =
-            PathHolder.temporaryDirectory
+            Path
+                .of(System.getProperty("java.io.tmpdir"))
                 .resolve("anitomy-kmp")
                 .resolve(digest)
         val library = directory.resolve(platform.libraryName)
@@ -78,11 +79,7 @@ internal object NativeLibraryLoader {
     }
 }
 
-private data class NativePlatform(
+private class NativePlatform(
     val directory: String,
     val libraryName: String,
 )
-
-private object PathHolder {
-    val temporaryDirectory = java.nio.file.Path.of(System.getProperty("java.io.tmpdir"))
-}

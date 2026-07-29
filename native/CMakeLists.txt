@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.21)
 
 project(
     anitomy-kmp-native
-    VERSION 0.1.0
     LANGUAGES CXX
 )
 
@@ -15,9 +14,10 @@ option(
 )
 option(
     ANITOMY_KMP_BUNDLE_CPP_RUNTIME
-    "Copy static GNU C++ runtime archives beside the bridge for Kotlin/Native"
+    "Fold the required static GNU C++ runtime objects into the Kotlin/Native bridge"
     OFF
 )
+option(ANITOMY_KMP_STRIP_JNI "Strip debug and unneeded symbols from the JNI library" OFF)
 
 add_library(anitomy-bridge STATIC
     src/anitomy_bridge.cpp
@@ -35,11 +35,28 @@ set_target_properties(anitomy-bridge PROPERTIES
     CXX_EXTENSIONS OFF
     POSITION_INDEPENDENT_CODE ON
 )
+if(ANITOMY_KMP_BUNDLE_CPP_RUNTIME)
+    set_target_properties(anitomy-bridge PROPERTIES
+        OUTPUT_NAME anitomy-bridge-core
+    )
+endif()
 
 if(MSVC)
     target_compile_options(anitomy-bridge PRIVATE /permissive- /utf-8 /W4 /Zc:__cplusplus)
 else()
-    target_compile_options(anitomy-bridge PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(
+        anitomy-bridge
+        PRIVATE
+            -Wall
+            -Wextra
+            -Wpedantic
+            -ffunction-sections
+            -fdata-sections
+    )
+    set_target_properties(anitomy-bridge PROPERTIES
+        CXX_VISIBILITY_PRESET hidden
+        VISIBILITY_INLINES_HIDDEN YES
+    )
 endif()
 
 if(ANITOMY_KMP_BUNDLE_CPP_RUNTIME AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -57,10 +74,15 @@ if(ANITOMY_KMP_BUILD_JNI)
     target_link_libraries(anitomy-kmp-jni PRIVATE anitomy-bridge)
     set_target_properties(anitomy-kmp-jni PROPERTIES
         CXX_EXTENSIONS OFF
+        CXX_VISIBILITY_PRESET hidden
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
         OUTPUT_NAME anitomy-kmp
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+        VISIBILITY_INLINES_HIDDEN YES
     )
+    if(NOT MSVC)
+        target_compile_options(anitomy-kmp-jni PRIVATE -ffunction-sections -fdata-sections)
+    endif()
     if(WIN32)
         set_target_properties(anitomy-kmp-jni PROPERTIES PREFIX "")
     endif()
@@ -70,6 +92,33 @@ if(ANITOMY_KMP_BUILD_JNI)
             target_link_options(anitomy-kmp-jni PRIVATE -static)
         endif()
     endif()
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_link_options(
+            anitomy-kmp-jni
+            PRIVATE
+                "LINKER:--exclude-libs,ALL"
+                "LINKER:--gc-sections"
+        )
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "AppleClang|Clang")
+        target_link_options(anitomy-kmp-jni PRIVATE "LINKER:-dead_strip")
+    endif()
+    if(ANITOMY_KMP_STRIP_JNI)
+        if(APPLE)
+            add_custom_command(
+                TARGET anitomy-kmp-jni
+                POST_BUILD
+                COMMAND ${CMAKE_STRIP} -S -x $<TARGET_FILE:anitomy-kmp-jni>
+                VERBATIM
+            )
+        elseif(NOT MSVC)
+            add_custom_command(
+                TARGET anitomy-kmp-jni
+                POST_BUILD
+                COMMAND ${CMAKE_STRIP} --strip-unneeded $<TARGET_FILE:anitomy-kmp-jni>
+                VERBATIM
+            )
+        endif()
+    endif()
 endif()
 
 if(ANITOMY_KMP_BUNDLE_CPP_RUNTIME)
@@ -77,9 +126,10 @@ if(ANITOMY_KMP_BUNDLE_CPP_RUNTIME)
         message(FATAL_ERROR "Kotlin/Native runtime bundling requires the GNU C++ toolchain")
     endif()
 
-    set(ANITOMY_KMP_RUNTIME_LIBRARIES libstdc++.a libgcc.a libgcc_eh.a)
+    set(ANITOMY_KMP_RUNTIME_LIBRARY_NAMES libstdc++.a libgcc.a libgcc_eh.a)
+    set(ANITOMY_KMP_RUNTIME_LIBRARIES)
 
-    foreach(RUNTIME_LIBRARY IN LISTS ANITOMY_KMP_RUNTIME_LIBRARIES)
+    foreach(RUNTIME_LIBRARY IN LISTS ANITOMY_KMP_RUNTIME_LIBRARY_NAMES)
         execute_process(
             COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=${RUNTIME_LIBRARY}
             OUTPUT_VARIABLE RUNTIME_LIBRARY_PATH
@@ -92,12 +142,38 @@ if(ANITOMY_KMP_BUNDLE_CPP_RUNTIME)
                 "${CMAKE_CXX_COMPILER} could not locate the static ${RUNTIME_LIBRARY}"
             )
         endif()
-        configure_file(
-            "${RUNTIME_LIBRARY_PATH}"
-            "${CMAKE_BINARY_DIR}/${RUNTIME_LIBRARY}"
-            COPYONLY
-        )
+        list(APPEND ANITOMY_KMP_RUNTIME_LIBRARIES "${RUNTIME_LIBRARY_PATH}")
     endforeach()
+
+    set(ANITOMY_KMP_PORTABLE_OBJECT "${CMAKE_BINARY_DIR}/anitomy_bridge_portable.o")
+    set(ANITOMY_KMP_PORTABLE_ARCHIVE "${CMAKE_BINARY_DIR}/libanitomy-bridge.a")
+    add_custom_command(
+        OUTPUT "${ANITOMY_KMP_PORTABLE_ARCHIVE}"
+        COMMAND
+            ${CMAKE_CXX_COMPILER}
+            -r
+            -nostdlib
+            -o
+            "${ANITOMY_KMP_PORTABLE_OBJECT}"
+            "-Wl,--whole-archive"
+            $<TARGET_FILE:anitomy-bridge>
+            "-Wl,--no-whole-archive"
+            "-Wl,--start-group"
+            ${ANITOMY_KMP_RUNTIME_LIBRARIES}
+            "-Wl,--end-group"
+        COMMAND ${CMAKE_STRIP} --strip-debug "${ANITOMY_KMP_PORTABLE_OBJECT}"
+        COMMAND ${CMAKE_COMMAND} -E rm -f "${ANITOMY_KMP_PORTABLE_ARCHIVE}"
+        COMMAND ${CMAKE_AR} qc "${ANITOMY_KMP_PORTABLE_ARCHIVE}" "${ANITOMY_KMP_PORTABLE_OBJECT}"
+        COMMAND ${CMAKE_RANLIB} "${ANITOMY_KMP_PORTABLE_ARCHIVE}"
+        DEPENDS
+            anitomy-bridge
+            ${ANITOMY_KMP_RUNTIME_LIBRARIES}
+        COMMAND_EXPAND_LISTS
+        VERBATIM
+    )
+    add_custom_target(anitomy-portable-bridge ALL
+        DEPENDS "${ANITOMY_KMP_PORTABLE_ARCHIVE}"
+    )
 endif()
 
 if(ANITOMY_KMP_BUILD_TESTS)

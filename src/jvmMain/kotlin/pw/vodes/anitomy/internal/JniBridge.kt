@@ -42,7 +42,7 @@ private object WireResultDecoder {
                     ?: error("Unknown Anitomy element kind: $kindId")
             val position = cursor.readU64AsLong()
             val valueLength = cursor.readU32AsInt()
-            val value = cursor.readBytes(valueLength).decodeToString(throwOnInvalidSequence = true)
+            val value = cursor.readUtf8(valueLength)
             result += Element(kind, value, position)
         }
         check(cursor.remaining == 0) { "Trailing data in Anitomy JNI result" }
@@ -88,11 +88,15 @@ private class ByteCursor(
         return value
     }
 
-    fun readBytes(count: Int): ByteArray {
+    fun readUtf8(count: Int): String {
         requireAvailable(count)
-        val result = bytes.copyOfRange(position, position + count)
+        val startIndex = position
         position += count
-        return result
+        return bytes.decodeToString(
+            startIndex = startIndex,
+            endIndex = position,
+            throwOnInvalidSequence = true,
+        )
     }
 
     private fun requireAvailable(count: Int) {

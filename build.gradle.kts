@@ -68,6 +68,7 @@ val configureHostNative by tasks.registering(Exec::class) {
         "-DANITOMY_KMP_BUILD_JNI=ON",
         "-DANITOMY_KMP_BUILD_TESTS=OFF",
         "-DANITOMY_KMP_STATIC_JNI_RUNTIME=OFF",
+        "-DANITOMY_KMP_STRIP_JNI=ON",
     )
 }
 
@@ -90,19 +91,6 @@ val buildHostNative by tasks.registering(Exec::class) {
         "Release",
         "--parallel",
     )
-}
-
-val stagedJvmNatives = layout.buildDirectory.dir("staged/jvmNatives")
-val stageHostJvmNative by tasks.registering(Sync::class) {
-    group = "native"
-    description = "Stages the current host JNI library in the release directory layout."
-    dependsOn(buildHostNative)
-    into(stagedJvmNatives)
-    if (hostResourceDirectory != null) {
-        from(hostNativeBuildDirectory.map { it.file(hostJniLibraryName) }) {
-            into(hostResourceDirectory)
-        }
-    }
 }
 
 val generatedJvmResources = layout.buildDirectory.dir("generated/jvmResources")
@@ -155,15 +143,6 @@ kotlin {
                 defaultLibrary.get().asFile.parentFile
             }
         val bridgeLibrary = "libanitomy-bridge.a"
-        val bundledRuntimeLibraries =
-            when {
-                !prebuiltDirectory.isPresent -> emptyList()
-                nativeTarget.startsWith("linux") ->
-                    listOf("libstdc++.a", "libgcc.a", "libgcc_eh.a")
-                nativeTarget == "mingwX64" ->
-                    listOf("libstdc++.a", "libgcc.a", "libgcc_eh.a")
-                else -> emptyList()
-            }
 
         compilations.getByName("main").cinterops.create("anitomy") {
             definitionFile.set(file("src/nativeInterop/cinterop/anitomy.def"))
@@ -174,15 +153,10 @@ kotlin {
                 "-staticLibrary",
                 bridgeLibrary,
             )
-            bundledRuntimeLibraries.forEach { runtimeLibrary ->
-                extraOpts("-staticLibrary", runtimeLibrary)
-            }
         }
     }
 
     sourceSets {
-        commonMain.dependencies {
-        }
         commonTest.dependencies {
             implementation(kotlin("test"))
         }

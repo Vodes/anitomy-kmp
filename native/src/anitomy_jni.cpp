@@ -85,6 +85,13 @@ Java_pw_vodes_anitomy_internal_JniBindings_parse(
         }
 
         std::vector<uint8_t> output;
+        output.reserve(
+            sizeof(wire_magic) +
+            sizeof(uint16_t) * 2 +
+            sizeof(uint32_t) +
+            count * (sizeof(uint32_t) * 2 + sizeof(uint64_t)) +
+            static_cast<size_t>(input_length)
+        );
         output.insert(output.end(), std::begin(wire_magic), std::end(wire_magic));
         append_u16(output, wire_version);
         append_u16(output, 0);

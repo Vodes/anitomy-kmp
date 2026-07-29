@@ -66,6 +66,7 @@ jobs:
             gradle_task: linuxX64Test
             cmake_system: ""
             cmake_processor: ""
+            copy_sysroot: "false"
           - target: linuxArm64
             compiler_package: gxx_linux-aarch64
             sysroot_package: sysroot_linux-aarch64
@@ -73,6 +74,7 @@ jobs:
             gradle_task: linkDebugTestLinuxArm64
             cmake_system: Linux
             cmake_processor: aarch64
+            copy_sysroot: "true"
     steps:
       - uses: actions/checkout@v5
         with:
@@ -83,40 +85,25 @@ jobs:
           java-version: "17"
           cache: gradle
       - name: Build portable native archive
-        env:
-          TARGET: ${{ matrix.target }}
-          COMPILER_PACKAGE: ${{ matrix.compiler_package }}
-          SYSROOT_PACKAGE: ${{ matrix.sysroot_package }}
-          COMPILER: ${{ matrix.compiler }}
-          CMAKE_SYSTEM: ${{ matrix.cmake_system }}
-          CMAKE_PROCESSOR: ${{ matrix.cmake_processor }}
-        run: |
-          docker run --rm \
-            -e TARGET -e COMPILER_PACKAGE -e SYSROOT_PACKAGE -e COMPILER \
-            -e CMAKE_SYSTEM -e CMAKE_PROCESSOR \
-            -v "$GITHUB_WORKSPACE:/work" -v "$JAVA_HOME:/jdk:ro" -w /work \
-            quay.io/condaforge/miniforge3@sha256:ccd8a580bf94ec3cd6e8b35ed243a2b88394fe5a3ccb5da97ee3400c1bbcd5f9 \
-            bash -lc '
-              conda create --quiet --yes -p /toolchain -c conda-forge \
-                "${COMPILER_PACKAGE}=15.2.0" "${SYSROOT_PACKAGE}=2.17" \
-                cmake=4.3.4 ninja=1.13.2
-              export PATH="/toolchain/bin:${PATH}"
-              export CXX="/toolchain/bin/${COMPILER}"
-              export JAVA_HOME=/jdk
-              export ANITOMY_BUILD_JNI=ON
-              export ANITOMY_CMAKE_SYSTEM_NAME="${CMAKE_SYSTEM}"
-              export ANITOMY_CMAKE_SYSTEM_PROCESSOR="${CMAKE_PROCESSOR}"
-              scripts/build-native.sh "${TARGET}"
-              if [[ "${TARGET}" == linuxArm64 ]]; then
-                cp -a /toolchain/aarch64-conda-linux-gnu/sysroot \
-                  "build/native/${TARGET}/sysroot"
-              fi
-              chmod -R a+rwX "build/native/${TARGET}"
-            '
+        uses: ./.github/actions/build-linux-native
+        with:
+          target: ${{ matrix.target }}
+          compiler-package: ${{ matrix.compiler_package }}
+          sysroot-package: ${{ matrix.sysroot_package }}
+          compiler: ${{ matrix.compiler }}
+          cmake-system: ${{ matrix.cmake_system }}
+          cmake-processor: ${{ matrix.cmake_processor }}
+          copy-sysroot: ${{ matrix.copy_sysroot }}
       - name: Compile and test Kotlin/Native binding
         run: >-
           ./gradlew ${{ matrix.gradle_task }} --no-daemon
           -Panitomy.nativeLibraryDir.${{ matrix.target }}=build/native/${{ matrix.target }}
+      - name: Verify native artifact structure
+        run: >-
+          scripts/verify-native-artifacts.sh
+          ${{ matrix.target }}
+          build/native/${{ matrix.target }}
+          --check-cinterop
       - name: Test release-style Linux JNI library
         if: matrix.target == 'linuxX64'
         run: |
@@ -168,6 +155,11 @@ jobs:
           ./gradlew.bat mingwX64Test jvmTest --no-daemon
           -Panitomy.nativeLibraryDir.mingwX64=build/native/mingwX64
           -Panitomy.jvmNativesDir=build/ci-jvm
+      - name: Verify native artifact structure
+        shell: msys2 {0}
+        run: >-
+          scripts/verify-native-artifacts.sh mingwX64 build/native/mingwX64
+          --check-cinterop
 
   macos-native:
     name: macosArm64
@@ -194,3 +186,7 @@ jobs:
           ./gradlew macosArm64Test jvmTest --no-daemon
           -Panitomy.nativeLibraryDir.macosArm64=build/native/macosArm64
           -Panitomy.jvmNativesDir=build/ci-jvm
+      - name: Verify native artifact structure
+        run: >-
+          scripts/verify-native-artifacts.sh macosArm64 build/native/macosArm64
+          --check-cinterop

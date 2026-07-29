@@ -104,7 +104,7 @@ std::vector<anitomy::Element> parse(
 
     anitomy::detail::Parser parser{tokenizer.tokens()};
     parser.parse(options);
-    return parser.elements();
+    return std::move(parser).elements();
 }
 
 }  // namespace
