@@ -5,7 +5,19 @@
 #include <utility>
 #include <vector>
 
-#include <anitomy.hpp>
+#include <anitomy_standard_library_compat.hpp>
+#include <anitomy/detail/parser.hpp>
+#include <anitomy/detail/tokenizer.hpp>
+#include <anitomy/element.hpp>
+#include <anitomy/options.hpp>
+
+#if defined(__linux__)
+// Modern libstdc++ uses this glibc optimization marker. Kotlin/Native's intentionally old Linux
+// sysroot predates it, so define the conservative multi-threaded value in the final executable.
+extern "C" {
+char __libc_single_threaded = 0;
+}
+#endif
 
 struct anitomy_result {
     std::vector<anitomy::Element> elements;
@@ -83,6 +95,18 @@ const anitomy::Element* element_at(const anitomy_result* result, const size_t in
     return &result->elements[index];
 }
 
+std::vector<anitomy::Element> parse(
+    const std::string_view input,
+    const anitomy::Options options
+) noexcept {
+    anitomy::detail::Tokenizer tokenizer{input};
+    tokenizer.tokenize(options);
+
+    anitomy::detail::Parser parser{tokenizer.tokens()};
+    parser.parse(options);
+    return parser.elements();
+}
+
 }  // namespace
 
 extern "C" anitomy_result* anitomy_parse_utf8(
@@ -95,7 +119,7 @@ extern "C" anitomy_result* anitomy_parse_utf8(
     }
 
     const std::string_view input_view{input == nullptr ? "" : input, input_length};
-    auto elements = anitomy::parse(input_view, make_options(options));
+    auto elements = parse(input_view, make_options(options));
     return new (std::nothrow) anitomy_result{.elements = std::move(elements)};
 }
 

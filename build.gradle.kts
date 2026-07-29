@@ -120,17 +120,28 @@ kotlin {
 
     targets.withType<KotlinNativeTarget>().configureEach {
         val nativeTarget = name
-        val propertyName = "anitomy.nativeLibrary.$nativeTarget"
-        val prebuiltLibrary = providers.gradleProperty(propertyName)
+        val propertyName = "anitomy.nativeLibraryDir.$nativeTarget"
+        val prebuiltDirectory = providers.gradleProperty(propertyName)
         val defaultLibrary =
             hostNativeBuildDirectory.map {
                 it.file(hostStaticLibraryName)
             }
-        val libraryFile =
-            if (prebuiltLibrary.isPresent) {
-                file(prebuiltLibrary.get())
+        val libraryDirectory =
+            if (prebuiltDirectory.isPresent) {
+                file(prebuiltDirectory.get())
             } else {
-                defaultLibrary.get().asFile
+                defaultLibrary.get().asFile.parentFile
+            }
+        val bridgeLibrary =
+            if (nativeTarget == "mingwX64") "libanitomy-bridge.a" else "libanitomy-bridge.a"
+        val bundledRuntimeLibraries =
+            when {
+                !prebuiltDirectory.isPresent -> emptyList()
+                nativeTarget.startsWith("linux") ->
+                    listOf("libstdc++.a", "libgcc.a", "libgcc_eh.a")
+                nativeTarget == "mingwX64" ->
+                    listOf("libstdc++.a", "libgcc.a", "libgcc_eh.a", "libwinpthread.a")
+                else -> emptyList()
             }
 
         compilations.getByName("main").cinterops.create("anitomy") {
@@ -138,10 +149,13 @@ kotlin {
             includeDirs.headerFilterOnly(file("native/include"))
             extraOpts(
                 "-libraryPath",
-                libraryFile.parentFile.absolutePath,
+                libraryDirectory.absolutePath,
                 "-staticLibrary",
-                libraryFile.name,
+                bridgeLibrary,
             )
+            bundledRuntimeLibraries.forEach { runtimeLibrary ->
+                extraOpts("-staticLibrary", runtimeLibrary)
+            }
         }
     }
 
