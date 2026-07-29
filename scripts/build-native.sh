@@ -7,13 +7,9 @@ project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 build_dir="${ANITOMY_NATIVE_BUILD_DIR:-${project_dir}/build/native/${target}}"
 
 case "${target}" in
-    linuxX64|linuxArm64|mingwX64)
+    linuxX64|linuxArm64|mingwX64|macosArm64)
         compiler="${CXX:-g++}"
         bundle_runtime=ON
-        ;;
-    macosArm64)
-        compiler="${CXX:-clang++}"
-        bundle_runtime=OFF
         ;;
     *)
         echo "unsupported target: ${target}" >&2

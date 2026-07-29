@@ -13,6 +13,19 @@ fail() {
     exit 1
 }
 
+verify_macos_linkage() {
+    local binary="$1"
+    local forbidden_dependencies='libstdc\+\+|libgcc|/opt/homebrew|/usr/local/(Cellar|opt)'
+    local forbidden_paths='/opt/homebrew|/usr/local/(Cellar|opt)'
+
+    if [[ "$(otool -L "${binary}")" =~ ${forbidden_dependencies} ]]; then
+        fail "${binary} dynamically depends on the Homebrew GCC runtime"
+    fi
+    if [[ "$(otool -l "${binary}")" =~ ${forbidden_paths} ]]; then
+        fail "${binary} contains a Homebrew load or runtime search path"
+    fi
+}
+
 [[ -f "${bridge}" ]] || fail "missing ${bridge}"
 for runtime in libstdc++.a libgcc.a libgcc_eh.a; do
     [[ ! -e "${artifact_dir}/${runtime}" ]] ||
@@ -52,6 +65,8 @@ case "${target}" in
         [[ -f "${jni}" ]] || fail "missing ${jni}"
         [[ "$(otool -l "${jni}")" == *"__debug_"* ]] &&
             fail "${jni} contains debug sections"
+        verify_macos_linkage "${bridge}"
+        verify_macos_linkage "${jni}"
         exports="$(nm -gU "${jni}" | awk '{print $NF}' | sed 's/^_//')"
         ;;
     *)
@@ -80,6 +95,15 @@ if [[ "${check_cinterop}" == "--check-cinterop" ]]; then
     )"
     [[ "${included_archives}" == "libanitomy-bridge.a" ]] ||
         fail "cinterop must include only libanitomy-bridge.a"
+
+    if [[ "${target}" == "macosArm64" ]]; then
+        native_test="$(
+            find "build/bin/${target}" -type f -name 'test.kexe' -print -quit
+        )"
+        [[ -n "${native_test}" ]] ||
+            fail "no Kotlin/Native test executable below build/bin/${target}"
+        verify_macos_linkage "${native_test}"
+    fi
 fi
 
 wc -c "${bridge}" "${jni}"

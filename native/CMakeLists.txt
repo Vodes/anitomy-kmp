@@ -90,9 +90,19 @@ if(ANITOMY_KMP_BUILD_JNI)
         target_link_options(anitomy-kmp-jni PRIVATE -static-libgcc -static-libstdc++)
         if(MINGW)
             target_link_options(anitomy-kmp-jni PRIVATE -static)
+        elseif(APPLE)
+            target_link_options(anitomy-kmp-jni PRIVATE -nodefaultrpaths)
         endif()
     endif()
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if(APPLE)
+        target_link_options(
+            anitomy-kmp-jni
+            PRIVATE
+                "LINKER:-dead_strip"
+                "LINKER:-dead_strip_dylibs"
+                "LINKER:-exported_symbol,_Java_pw_vodes_anitomy_internal_JniBindings_parse"
+        )
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         target_link_options(
             anitomy-kmp-jni
             PRIVATE
@@ -145,32 +155,52 @@ if(ANITOMY_KMP_BUNDLE_CPP_RUNTIME)
         list(APPEND ANITOMY_KMP_RUNTIME_LIBRARIES "${RUNTIME_LIBRARY_PATH}")
     endforeach()
 
-    set(ANITOMY_KMP_PORTABLE_OBJECT "${CMAKE_BINARY_DIR}/anitomy_bridge_portable.o")
     set(ANITOMY_KMP_PORTABLE_ARCHIVE "${CMAKE_BINARY_DIR}/libanitomy-bridge.a")
-    add_custom_command(
-        OUTPUT "${ANITOMY_KMP_PORTABLE_ARCHIVE}"
-        COMMAND
-            ${CMAKE_CXX_COMPILER}
-            -r
-            -nostdlib
-            -o
-            "${ANITOMY_KMP_PORTABLE_OBJECT}"
-            "-Wl,--whole-archive"
-            $<TARGET_FILE:anitomy-bridge>
-            "-Wl,--no-whole-archive"
-            "-Wl,--start-group"
-            ${ANITOMY_KMP_RUNTIME_LIBRARIES}
-            "-Wl,--end-group"
-        COMMAND ${CMAKE_STRIP} --strip-debug "${ANITOMY_KMP_PORTABLE_OBJECT}"
-        COMMAND ${CMAKE_COMMAND} -E rm -f "${ANITOMY_KMP_PORTABLE_ARCHIVE}"
-        COMMAND ${CMAKE_AR} qc "${ANITOMY_KMP_PORTABLE_ARCHIVE}" "${ANITOMY_KMP_PORTABLE_OBJECT}"
-        COMMAND ${CMAKE_RANLIB} "${ANITOMY_KMP_PORTABLE_ARCHIVE}"
-        DEPENDS
-            anitomy-bridge
-            ${ANITOMY_KMP_RUNTIME_LIBRARIES}
-        COMMAND_EXPAND_LISTS
-        VERBATIM
-    )
+    if(APPLE)
+        find_program(ANITOMY_KMP_APPLE_LIBTOOL NAMES libtool REQUIRED)
+        add_custom_command(
+            OUTPUT "${ANITOMY_KMP_PORTABLE_ARCHIVE}"
+            COMMAND ${CMAKE_COMMAND} -E rm -f "${ANITOMY_KMP_PORTABLE_ARCHIVE}"
+            COMMAND
+                ${ANITOMY_KMP_APPLE_LIBTOOL}
+                -static
+                -o
+                "${ANITOMY_KMP_PORTABLE_ARCHIVE}"
+                $<TARGET_FILE:anitomy-bridge>
+                ${ANITOMY_KMP_RUNTIME_LIBRARIES}
+            DEPENDS
+                anitomy-bridge
+                ${ANITOMY_KMP_RUNTIME_LIBRARIES}
+            COMMAND_EXPAND_LISTS
+            VERBATIM
+        )
+    else()
+        set(ANITOMY_KMP_PORTABLE_OBJECT "${CMAKE_BINARY_DIR}/anitomy_bridge_portable.o")
+        add_custom_command(
+            OUTPUT "${ANITOMY_KMP_PORTABLE_ARCHIVE}"
+            COMMAND
+                ${CMAKE_CXX_COMPILER}
+                -r
+                -nostdlib
+                -o
+                "${ANITOMY_KMP_PORTABLE_OBJECT}"
+                "-Wl,--whole-archive"
+                $<TARGET_FILE:anitomy-bridge>
+                "-Wl,--no-whole-archive"
+                "-Wl,--start-group"
+                ${ANITOMY_KMP_RUNTIME_LIBRARIES}
+                "-Wl,--end-group"
+            COMMAND ${CMAKE_STRIP} --strip-debug "${ANITOMY_KMP_PORTABLE_OBJECT}"
+            COMMAND ${CMAKE_COMMAND} -E rm -f "${ANITOMY_KMP_PORTABLE_ARCHIVE}"
+            COMMAND ${CMAKE_AR} qc "${ANITOMY_KMP_PORTABLE_ARCHIVE}" "${ANITOMY_KMP_PORTABLE_OBJECT}"
+            COMMAND ${CMAKE_RANLIB} "${ANITOMY_KMP_PORTABLE_ARCHIVE}"
+            DEPENDS
+                anitomy-bridge
+                ${ANITOMY_KMP_RUNTIME_LIBRARIES}
+            COMMAND_EXPAND_LISTS
+            VERBATIM
+        )
+    endif()
     add_custom_target(anitomy-portable-bridge ALL
         DEPENDS "${ANITOMY_KMP_PORTABLE_ARCHIVE}"
     )

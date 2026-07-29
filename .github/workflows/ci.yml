@@ -22,30 +22,34 @@ jobs:
           distribution: temurin
           java-version: "17"
           cache: gradle
-      - name: Install native build tools
-        run: sudo apt-get update && sudo apt-get install --yes cmake g++ ninja-build
-      - name: Test the C ABI bridge
-        run: |
-          cmake -S native -B build/native/cpp-tests -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_CXX_COMPILER=g++ \
-            -DANITOMY_KMP_BUILD_JNI=OFF \
-            -DANITOMY_KMP_BUILD_TESTS=ON
-          cmake --build build/native/cpp-tests --parallel
-          ctest --test-dir build/native/cpp-tests --output-on-failure
+      - name: Build and test the bridge with GCC 15
+        uses: ./.github/actions/build-linux-native
+        with:
+          target: linuxX64
+          compiler-package: gxx_linux-64
+          sysroot-package: sysroot_linux-64
+          compiler: x86_64-conda-linux-gnu-c++
+          native-tests: "true"
       - name: Test untouched Anitomy with GCC 16
         run: |
-          docker run --rm -v "$GITHUB_WORKSPACE:/work" -w /work \
+          docker run --rm -v "$GITHUB_WORKSPACE:/work:ro" -w /tmp \
             fedora:44@sha256:6c75d5bf57cb0fa5aa4b92c6a83c86c791644496d9ac230de7711f5b8ec3b898 \
             bash -lc '
             dnf install --quiet --assumeyes cmake gcc-c++ ninja-build
-            cmake -S vendor/anitomy -B build/native/upstream-tests -G Ninja \
+            cp -a /work/vendor/anitomy /tmp/anitomy
+            cmake -S /tmp/anitomy -B /tmp/upstream-tests -G Ninja \
               -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
-            cmake --build build/native/upstream-tests --parallel
-            ctest --test-dir build/native/upstream-tests --output-on-failure
+            cmake --build /tmp/upstream-tests --parallel
+            ctest --test-dir /tmp/upstream-tests --output-on-failure
           '
+      - name: Stage Linux JNI library
+        run: |
+          mkdir -p build/ci-jvm/linux-x64
+          cp build/native/linuxX64/libanitomy-kmp.so build/ci-jvm/linux-x64/
       - name: Test JVM bindings
-        run: ./gradlew jvmTest --no-daemon
+        run: >-
+          ./gradlew jvmTest --no-daemon
+          -Panitomy.jvmNativesDir=build/ci-jvm
       - name: Verify Java 17 bytecode
         run: |
           javap -verbose \
@@ -151,10 +155,10 @@ jobs:
           Copy-Item build/native/mingwX64/anitomy-kmp.dll build/ci-jvm/windows-x64/
       - name: Test Kotlin/Native and JVM bindings
         shell: pwsh
-        run: >-
-          ./gradlew.bat mingwX64Test jvmTest --no-daemon
-          -Panitomy.nativeLibraryDir.mingwX64=build/native/mingwX64
-          -Panitomy.jvmNativesDir=build/ci-jvm
+        env:
+          ORG_GRADLE_PROJECT_anitomy.nativeLibraryDir.mingwX64: build/native/mingwX64
+          ORG_GRADLE_PROJECT_anitomy.jvmNativesDir: build/ci-jvm
+        run: ./gradlew.bat mingwX64Test jvmTest --no-daemon
       - name: Verify native artifact structure
         shell: msys2 {0}
         run: >-
@@ -173,10 +177,14 @@ jobs:
           distribution: temurin
           java-version: "17"
           cache: gradle
-      - name: Install Ninja
-        run: brew install ninja
-      - name: Build Apple Clang native archive
-        run: ANITOMY_BUILD_JNI=ON CXX=clang++ scripts/build-native.sh macosArm64
+      - name: Install GCC 15 and Ninja
+        run: brew install gcc@15 ninja
+      - name: Build GCC 15 native archive
+        run: |
+          gxx="$(brew --prefix gcc@15)/bin/g++-15"
+          ANITOMY_BUILD_JNI=ON ANITOMY_BUILD_TESTS=ON CXX="${gxx}" \
+            scripts/build-native.sh macosArm64
+          ctest --test-dir build/native/macosArm64 --output-on-failure
       - name: Stage macOS JNI library
         run: |
           mkdir -p build/ci-jvm/macos-arm64

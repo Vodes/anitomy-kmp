@@ -41,8 +41,9 @@ val hostJniLibraryName =
 val hostStaticLibraryName = "libanitomy-bridge.a"
 val hostCxxCompiler =
     providers.gradleProperty("anitomy.hostCxxCompiler").getOrElse(
-        if (hostIsMacOs) "clang++" else "g++",
+        if (hostIsMacOs) "g++-15" else "g++",
     )
+val hostBundlesCppRuntime = hostIsMacOs
 
 val hostNativeBuildDirectory = layout.buildDirectory.dir("native/host")
 val configureHostNative by tasks.registering(Exec::class) {
@@ -67,7 +68,8 @@ val configureHostNative by tasks.registering(Exec::class) {
         "-DCMAKE_CXX_COMPILER=$hostCxxCompiler",
         "-DANITOMY_KMP_BUILD_JNI=ON",
         "-DANITOMY_KMP_BUILD_TESTS=OFF",
-        "-DANITOMY_KMP_STATIC_JNI_RUNTIME=OFF",
+        "-DANITOMY_KMP_BUNDLE_CPP_RUNTIME=${if (hostBundlesCppRuntime) "ON" else "OFF"}",
+        "-DANITOMY_KMP_STATIC_JNI_RUNTIME=${if (hostBundlesCppRuntime) "ON" else "OFF"}",
         "-DANITOMY_KMP_STRIP_JNI=ON",
     )
 }
@@ -170,14 +172,14 @@ listOf("linuxX64", "linuxArm64", "mingwX64", "macosArm64").forEach { nativeTarge
     val cinteropTask = "cinteropAnitomy${nativeTarget.replaceFirstChar(Char::uppercase)}"
     val prebuiltDirectory =
         providers.gradleProperty("anitomy.nativeLibraryDir.$nativeTarget")
-    val canUseHostBridgeWithoutBundledRuntime =
+    val canUseHostBridge =
         nativeTarget == hostNativeTarget && nativeTarget == "macosArm64"
 
     tasks.matching { it.name == cinteropTask }.configureEach {
         if (prebuiltDirectory.isPresent) {
             return@configureEach
         }
-        if (canUseHostBridgeWithoutBundledRuntime) {
+        if (canUseHostBridge) {
             dependsOn(buildHostNative)
         } else {
             doFirst {

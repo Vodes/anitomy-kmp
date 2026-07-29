@@ -76,8 +76,8 @@ CXX=g++ scripts/build-native.sh linuxX64
   -Panitomy.nativeLibraryDir.linuxX64=build/native/linuxX64
 ```
 
-For GNU targets, `libanitomy-bridge.a` is self-contained: the build folds in only
-the C++ runtime objects required by the bridge. Do not package separate
+For GNU targets, `libanitomy-bridge.a` is self-contained: the build folds the
+required GNU C++ runtime into the bridge archive. Do not package separate
 `libstdc++` or `libgcc` archives with the Kotlin/Native publication.
 
 Linux Kotlin/Native artifacts must be built with GCC 15.2 and an explicit glibc
@@ -94,8 +94,17 @@ ninja=1.13.2
 
 For `linuxArm64`, use the corresponding `gxx_linux-aarch64` and
 `sysroot_linux-aarch64` cross packages and set CMake's system processor to
-`aarch64`. Windows builds use MinGW GCC; macOS ARM64 builds use Apple Clang and
-the system libc++.
+`aarch64`. Windows builds use MinGW GCC. Local macOS ARM64 builds require
+Homebrew GCC 15 and Ninja:
+
+```shell
+brew install gcc@15 ninja
+CXX="$(brew --prefix gcc@15)/bin/g++-15" \
+  scripts/build-native.sh macosArm64
+```
+
+The macOS bridge and JNI library statically bundle the GNU C++ and GCC runtimes;
+they do not require Homebrew to be installed at runtime.
 
 To assemble a JVM artifact with all four JNI variants, point
 `anitomy.jvmNativesDir` at a directory with this layout:

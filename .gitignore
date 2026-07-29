@@ -35,3 +35,4 @@ local.properties
 # Operating systems
 .DS_Store
 Thumbs.db
+/temp

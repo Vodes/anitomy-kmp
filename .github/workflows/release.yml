@@ -144,10 +144,12 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - name: Install Ninja
-        run: brew install ninja
-      - name: Build Apple Clang archive and JNI library
-        run: ANITOMY_BUILD_JNI=ON CXX=clang++ scripts/build-native.sh macosArm64
+      - name: Install GCC 15 and Ninja
+        run: brew install gcc@15 ninja
+      - name: Build GCC 15 archive and JNI library
+        run: |
+          gxx="$(brew --prefix gcc@15)/bin/g++-15"
+          ANITOMY_BUILD_JNI=ON CXX="${gxx}" scripts/build-native.sh macosArm64
       - name: Stage release files
         run: |
           mkdir -p build/release/native/macosArm64 build/release/jvm/macos-arm64

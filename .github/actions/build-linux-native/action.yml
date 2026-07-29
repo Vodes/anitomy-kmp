@@ -26,6 +26,10 @@ inputs:
     description: Whether to copy the target sysroot beside the artifacts for QEMU.
     required: false
     default: "false"
+  native-tests:
+    description: Whether to build and run the native C ABI bridge tests.
+    required: false
+    default: "false"
 
 runs:
   using: composite
@@ -40,10 +44,12 @@ runs:
         CMAKE_SYSTEM: ${{ inputs.cmake-system }}
         CMAKE_PROCESSOR: ${{ inputs.cmake-processor }}
         COPY_SYSROOT: ${{ inputs.copy-sysroot }}
+        NATIVE_TESTS: ${{ inputs.native-tests }}
       run: |
+        mkdir -p "build/native/${TARGET}"
         docker run --rm \
           -e TARGET -e COMPILER_PACKAGE -e SYSROOT_PACKAGE -e COMPILER \
-          -e CMAKE_SYSTEM -e CMAKE_PROCESSOR -e COPY_SYSROOT \
+          -e CMAKE_SYSTEM -e CMAKE_PROCESSOR -e COPY_SYSROOT -e NATIVE_TESTS \
           -v "$GITHUB_WORKSPACE:/work" -v "$JAVA_HOME:/jdk:ro" -w /work \
           quay.io/condaforge/miniforge3@sha256:ccd8a580bf94ec3cd6e8b35ed243a2b88394fe5a3ccb5da97ee3400c1bbcd5f9 \
           bash -lc '
@@ -54,9 +60,13 @@ runs:
             export CXX="/toolchain/bin/${COMPILER}"
             export JAVA_HOME=/jdk
             export ANITOMY_BUILD_JNI=ON
+            export ANITOMY_BUILD_TESTS="${NATIVE_TESTS}"
             export ANITOMY_CMAKE_SYSTEM_NAME="${CMAKE_SYSTEM}"
             export ANITOMY_CMAKE_SYSTEM_PROCESSOR="${CMAKE_PROCESSOR}"
             scripts/build-native.sh "${TARGET}"
+            if [[ "${NATIVE_TESTS}" == "true" ]]; then
+              ctest --test-dir "build/native/${TARGET}" --output-on-failure
+            fi
             if [[ "${COPY_SYSROOT}" == "true" ]]; then
               cp -a "/toolchain/${COMPILER%%-c++}/sysroot" \
                 "build/native/${TARGET}/sysroot"
