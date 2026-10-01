@@ -23,4 +23,5 @@ public enum class ElementKind {
     VIDEO_TERM,
     VOLUME,
     YEAR,
+    EPISODE_ALTERNATIVE,
 }

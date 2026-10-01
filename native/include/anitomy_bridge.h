@@ -31,7 +31,8 @@ typedef enum anitomy_element_kind {
     ANITOMY_ELEMENT_VIDEO_RESOLUTION = 17,
     ANITOMY_ELEMENT_VIDEO_TERM = 18,
     ANITOMY_ELEMENT_VOLUME = 19,
-    ANITOMY_ELEMENT_YEAR = 20
+    ANITOMY_ELEMENT_YEAR = 20,
+    ANITOMY_ELEMENT_EPISODE_ALTERNATIVE = 21
 } anitomy_element_kind;
 
 typedef enum anitomy_option {

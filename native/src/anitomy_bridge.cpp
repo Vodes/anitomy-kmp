@@ -48,6 +48,8 @@ anitomy_element_kind to_bridge_kind(const anitomy::ElementKind kind) noexcept {
             return ANITOMY_ELEMENT_DEVICE;
         case anitomy::ElementKind::Episode:
             return ANITOMY_ELEMENT_EPISODE;
+        case anitomy::ElementKind::EpisodeAlternative:
+            return ANITOMY_ELEMENT_EPISODE_ALTERNATIVE;
         case anitomy::ElementKind::EpisodeTitle:
             return ANITOMY_ELEMENT_EPISODE_TITLE;
         case anitomy::ElementKind::FileChecksum:

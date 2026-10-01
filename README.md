@@ -1,11 +1,12 @@
 # anitomy-kmp
 
 Kotlin Multiplatform bindings for the C++23 rewrite of
-[Anitomy](https://github.com/erengy/anitomy). The library preserves Anitomy v2's
-ordered output, duplicate element kinds, and UTF-8 byte positions.
+[Anitomy](https://github.com/Vodes/anitomy/tree/feat/misc-fixes). The library
+preserves Anitomy v2's ordered output, duplicate element kinds, and UTF-8 byte
+positions.
 
-The upstream parser is pinned as a Git submodule at
-`8498b538f5ddeedaef1b3fa5ad4bf6d67dd67d35`.
+The parser uses Vodes' `feat/misc-fixes` fork, pinned as a Git submodule at
+`3ba5ecf103635b636ca4bce50604ee74b82101e0`.
 
 ## Use
 

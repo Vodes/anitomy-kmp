@@ -39,6 +39,16 @@ class AnitomyTest {
     }
 
     @Test
+    fun exposesAlternativeEpisodeNumbers() {
+        val elements = parse("Show - 01 (176).mkv")
+        assertEquals(Element(ElementKind.EPISODE, "01", 7), elements.first { it.kind == ElementKind.EPISODE })
+        assertEquals(
+            Element(ElementKind.EPISODE_ALTERNATIVE, "176", 11),
+            elements.first { it.kind == ElementKind.EPISODE_ALTERNATIVE },
+        )
+    }
+
+    @Test
     fun exposesUtf8BytePositions() {
         assertEquals(
             listOf(
@@ -105,6 +115,7 @@ class AnitomyTest {
                     "[Nishi-Taku] Tamayura ~graduation photo~ Movie Part 1 " +
                         "[BD][720p][98965607].mkv",
                     "Vol.01",
+                    "Show - 01 (176).mkv",
                     "[TaigaSubs]_Toradora!_(2008)_-_01v2_-_Tiger_and_Dragon_" +
                         "[1280x720_H.264_FLAC][1234ABCD].mkv",
                 )
@@ -204,7 +215,8 @@ private val styxCases =
             "Invincible.2021.S02E01.A.LESSON.FOR.YOUR.NEXT.LIFE.1080p." +
                 "AMZN.WEB-DL.DDP5.1.H.264-FLUX.mkv",
             """
-            TITLE | Invincible 2021 | 0
+            TITLE | Invincible | 0
+            YEAR | 2021 | 11
             SEASON | 02 | 17
             EPISODE | 01 | 20
             EPISODE_TITLE | A LESSON FOR YOUR NEXT LIFE | 23
@@ -254,6 +266,8 @@ private val styxCases =
             EPISODE | 10 | 10
             VIDEO_RESOLUTION | 1080p | 13
             SOURCE | BluRay | 19
+            AUDIO_TERM | Opus | 26
+            AUDIO_TERM | 2.0 | 30
             VIDEO_TERM | x265 | 34
             RELEASE_GROUP | smol | 39
             FILE_EXTENSION | mkv | 44

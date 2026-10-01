@@ -78,6 +78,13 @@ int main() {
     CHECK(has_element(result, ANITOMY_ELEMENT_EPISODE, "111C"));
     anitomy_result_destroy(result);
 
+    constexpr std::string_view alternative{"Show - 01 (176).mkv"};
+    result = anitomy_parse_utf8(alternative.data(), alternative.size(), ANITOMY_OPTIONS_ALL);
+    CHECK(result != nullptr);
+    CHECK(has_element(result, ANITOMY_ELEMENT_EPISODE, "01"));
+    CHECK(has_element(result, ANITOMY_ELEMENT_EPISODE_ALTERNATIVE, "176"));
+    anitomy_result_destroy(result);
+
     result = anitomy_parse_utf8("", 0, ANITOMY_OPTIONS_ALL);
     CHECK(result != nullptr);
     CHECK(anitomy_result_count(result) == 0);
