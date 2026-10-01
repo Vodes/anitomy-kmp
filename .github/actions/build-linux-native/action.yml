@@ -51,7 +51,7 @@ runs:
           -e TARGET -e COMPILER_PACKAGE -e SYSROOT_PACKAGE -e COMPILER \
           -e CMAKE_SYSTEM -e CMAKE_PROCESSOR -e COPY_SYSROOT -e NATIVE_TESTS \
           -v "$GITHUB_WORKSPACE:/work" -v "$JAVA_HOME:/jdk:ro" -w /work \
-          quay.io/condaforge/miniforge3@sha256:ccd8a580bf94ec3cd6e8b35ed243a2b88394fe5a3ccb5da97ee3400c1bbcd5f9 \
+          quay.io/condaforge/miniforge3:latest \
           bash -lc '
             conda create --quiet --yes -p /toolchain -c conda-forge \
               "${COMPILER_PACKAGE}=15.2.0" "${SYSROOT_PACKAGE}=2.17" \
