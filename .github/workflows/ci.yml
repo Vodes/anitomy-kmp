@@ -40,7 +40,9 @@ jobs:
             cmake -S /tmp/anitomy -B /tmp/upstream-tests -G Ninja \
               -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
             cmake --build /tmp/upstream-tests --parallel
-            ctest --test-dir /tmp/upstream-tests --output-on-failure
+            ctest --test-dir /tmp/upstream-tests --output-on-failure -R "^Unit$"
+            bash /work/scripts/check-anitomy-data.sh \
+              /tmp/anitomy/bin/anitomy-tests /tmp/anitomy/test
           '
       - name: Stage Linux JNI library
         run: |

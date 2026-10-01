@@ -133,6 +133,11 @@ positions, ownership, and the Styx downloader regression corpus. The raw Anitomy
 v2 result is the golden behavior; downloader-specific title repair is
 intentionally not part of this binding.
 
+CI also runs the fork's unit tests and compares its data corpus mismatches with
+`scripts/anitomy-data-expected-failures.txt`. This baseline records the known
+failures at the pinned revision; review and update it when changing the parser
+pin. Any changed mismatch or unexpected exit status fails CI.
+
 ## Releases
 
 Remote publishing is allowed only when `HEAD` has exactly one semantic version

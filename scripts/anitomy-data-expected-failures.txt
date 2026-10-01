@@ -1,0 +1,405 @@
+Input:    `[BakaWolf-m.3.3.w] Special A 01 (H.264) [C83164B9].mkv`
+Element:  `type`
+Expected: ``
+Got:      `Special`
+
+Input:    `[Juuni.Kokki]-(Les.12.Royaumes)-[Ep.24]-[x264+OGG]-[JAP+FR+Sub.FR]-[Chap]-[AzF].mkv`
+Element:  `title`
+Expected: `Juuni Kokki`
+Got:      `Les 12 Royaumes`
+
+Input:    `[Juuni.Kokki]-(Les.12.Royaumes)-[Ep.24]-[x264+OGG]-[JAP+FR+Sub.FR]-[Chap]-[AzF].mkv`
+Element:  `release_group`
+Expected: ``
+Got:      `Juuni.Kokki`
+
+Input:    `Code_Geass_R2_TV_[20_of_25]_[ru_jp]_[HDTV]_[Varies_&_Cuba77_&_AnimeReactor_RU].mkv`
+Element:  `release_group`
+Expected: `Varies & Cuba77 & AnimeReactor RU`
+Got:      `ru_jp`
+
+Input:    `Noein_[01_of_24]_[ru_jp]_[bodlerov_&_torrents_ru].mkv`
+Element:  `release_group`
+Expected: `bodlerov & torrents ru`
+Got:      `ru_jp`
+
+Input:    `Fate_Stay_Night_Ep05_The_Two_Magi_Part1_[720p,BluRay,x264]_-_THORA.mkv`
+Element:  `part`
+Expected: ``
+Got:      `1`
+
+Input:    `[Keroro].148.[Xvid.mp3].[FE68D5F1].avi`
+Element:  `title`
+Expected: `Keroro`
+Got:      `148`
+
+Input:    `[Keroro].148.[Xvid.mp3].[FE68D5F1].avi`
+Element:  `episode`
+Expected: `148`
+Got:      ``
+
+Input:    `[Keroro].148.[Xvid.mp3].[FE68D5F1].avi`
+Element:  `release_group`
+Expected: ``
+Got:      `Keroro`
+
+Input:    `Macross Frontier - Sayonara no Tsubasa (Central Anime, 720p) [46B35E25].mkv`
+Element:  `release_group`
+Expected: `Central Anime`
+Got:      ``
+
+Input:    `[Raizel] Persona 4 The Animation Episode 13 - A Stormy Summer Vacation Part 1  [BD_1080p_Dual_Audio_FLAC_Hi10p][8A45634B].mkv`
+Element:  `part`
+Expected: ``
+Got:      `1`
+
+Input:    `[Mobile Suit Gundam Seed Destiny HD REMASTER][07][Big5][720p][AVC_AAC][encoded by SEED].mp4`
+Element:  `title`
+Expected: `Mobile Suit Gundam Seed Destiny`
+Got:      `encoded by SEED`
+
+Input:    `[Mobile Suit Gundam Seed Destiny HD REMASTER][07][Big5][720p][AVC_AAC][encoded by SEED].mp4`
+Element:  `release_group`
+Expected: `encoded by SEED`
+Got:      ``
+
+Input:    `「K」 Image Blu-ray WHITE & BLACK - Main (BD 1280x720 AVC AAC).mp4`
+Element:  `title`
+Expected: `「K」`
+Got:      `Image`
+
+Input:    `「K」 Image Blu-ray WHITE & BLACK - Main (BD 1280x720 AVC AAC).mp4`
+Element:  `release_group`
+Expected: ``
+Got:      `K`
+
+Input:    `[[Zero-Raws] Shingeki no Kyojin - 05 (MBS 1280x720 x264 AAC).mp4`
+Element:  `title`
+Expected: `Shingeki no Kyojin`
+Got:      `Shingeki no Kyojin - 05`
+
+Input:    `[Hakugetsu&MGRT][Evangelion 3.0 You Can (Not) Redo][480P][V0].mp4`
+Element:  `title`
+Expected: `Evangelion 3.0 You Can (Not) Redo`
+Got:      `Evangelion 3.0 You Can`
+
+Input:    `[TV-J] Kidou Senshi Gundam UC Unicorn - episode.02 [BD 1920x1080 h264+AAC(5.1ch JP+EN) +Sub(JP-EN-SP-FR-CH) Chap].mp4`
+Element:  `release_group`
+Expected: `TV-J`
+Got:      ``
+
+Input:    `[TV-J] Kidou Senshi Gundam UC Unicorn - episode.02 [BD 1920x1080 h264+AAC(5.1ch JP+EN) +Sub(JP-EN-SP-FR-CH) Chap].mp4`
+Element:  `type`
+Expected: ``
+Got:      `TV, SP`
+
+Input:    `[UTW-THORA] Evangelion 3.33 You Can (Not) Redo [BD][1080p,x264,flac][F2060CF5].mkv`
+Element:  `release_group`
+Expected: `UTW-THORA`
+Got:      `THORA`
+
+Input:    `[Zero-Raws] Shingeki no Kyojin - 25 END (MBS 1280x720 x264 AAC).mp4`
+Element:  `episode_title`
+Expected: ``
+Got:      `END`
+
+Input:    `【MMZYSUB】★【Golden Time】[24（END）][GB][720P_MP4]`
+Element:  `title`
+Expected: `Golden Time`
+Got:      `★【Golden Time】[24`
+
+Input:    `【MMZYSUB】★【Golden Time】[24（END）][GB][720P_MP4]`
+Element:  `episode`
+Expected: `24`
+Got:      ``
+
+Input:    `[異域字幕組][漆黑的子彈][Black Bullet][11][1280x720][繁体].mp4`
+Element:  `title`
+Expected: `Black Bullet`
+Got:      `漆黑的子彈`
+
+Input:    `[AoJiaoZero][Mangaka-san to Assistant-san to the Animation] 02 [BIG][X264_AAC][720P].mp4`
+Element:  `title`
+Expected: `Mangaka-san to Assistant-san to the Animation`
+Got:      `02`
+
+Input:    `[AoJiaoZero][Mangaka-san to Assistant-san to the Animation] 02 [BIG][X264_AAC][720P].mp4`
+Element:  `episode`
+Expected: `02`
+Got:      ``
+
+Input:    `Attack on Titan - Episode 3 - A Dim Light Amid Despair / Humanity's Comeback, Part 1`
+Element:  `part`
+Expected: ``
+Got:      `1`
+
+Input:    `DRAMAtical Murder Episode 1 - Data_01_Login`
+Element:  `episode_title`
+Expected: `Data_01_Login`
+Got:      `Data 01 Login`
+
+Input:    `__BLUE DROP 10 (1).avi`
+Element:  `title`
+Expected: `BLUE DROP`
+Got:      `BLUE DROP 10`
+
+Input:    `__BLUE DROP 10 (1).avi`
+Element:  `episode`
+Expected: `10`
+Got:      `1`
+
+Input:    `37 [Ruberia]_Death_Note_-_37v2_[FINAL]_[XviD][6FA7D273].avi`
+Element:  `release_group`
+Expected: `Ruberia`
+Got:      ``
+
+Input:    `37 [Ruberia]_Death_Note_-_37v2_[FINAL]_[XviD][6FA7D273].avi`
+Element:  `title`
+Expected: `Death Note`
+Got:      `37 [Ruberia] Death Note`
+
+Input:    `[UTW]_Accel_World_-_EX01_[BD][h264-720p_AAC][3E56EE18].mkv`
+Element:  `title`
+Expected: `Accel World - EX`
+Got:      `Accel World - EX01`
+
+Input:    `[UTW]_Accel_World_-_EX01_[BD][h264-720p_AAC][3E56EE18].mkv`
+Element:  `episode`
+Expected: `01`
+Got:      ``
+
+Input:    `[Urusai]_Bokura_Ga_Ita_01_[DVD_h264_AC3]_[BFCE1627][Fixed].mkv`
+Element:  `language`
+Expected: ``
+Got:      `Ita`
+
+Input:    `EvoBot.[Watakushi]_Akuma_no_Riddle_-_01v2_[720p][69A307A2].mkv`
+Element:  `release_group`
+Expected: `Watakushi`
+Got:      ``
+
+Input:    `EvoBot.[Watakushi]_Akuma_no_Riddle_-_01v2_[720p][69A307A2].mkv`
+Element:  `title`
+Expected: `Akuma no Riddle`
+Got:      `EvoBot.[Watakushi] Akuma no Riddle`
+
+Input:    `Episode 14 Ore no Imouto ga Konnani Kawaii Wake ga Nai. (saison 2) VOSTFR`
+Element:  `title`
+Expected: `Ore no Imouto ga Konnani Kawaii Wake ga Nai.`
+Got:      ``
+
+Input:    `Episode 14 Ore no Imouto ga Konnani Kawaii Wake ga Nai. (saison 2) VOSTFR`
+Element:  `episode_title`
+Expected: ``
+Got:      `Ore no Imouto ga Konnani Kawaii Wake ga Nai.`
+
+Input:    `[Coalgirls]_Fate_Zero_OVA3.5_(1280x720_Blu-ray_FLAC)_[5F5AD026].mkv`
+Element:  `episode`
+Expected: `3.5`
+Got:      `3`
+
+Input:    `[SpoonSubs]_Hidamari_Sketch_x365_-_04.1_(DVD)[B6CE8458].mkv`
+Element:  `episode`
+Expected: `04.1`
+Got:      `04`
+
+Input:    `[Elysium]Sora.no.Woto.EP07.5(BD.720p.AAC)[C37580F8].mkv`
+Element:  `episode`
+Expected: `07.5`
+Got:      `07`
+
+Input:    `[Hiryuu] Maji de Watashi ni Koi Shinasai!! - 02 [720].mkv`
+Element:  `video_resolution`
+Expected: `720`
+Got:      ``
+
+Input:    `[ANE] Yosuga no Sora - Ep01 Preview (Yorihime ver) [BDRip 1080p x264 FLAC].mkv`
+Element:  `episode_title`
+Expected: ``
+Got:      `Preview`
+
+Input:    `[B-G_&_m.3.3.w]_Myself_Yourself_12.DVD(H.264_DD2.0)_[CB2B37F1].mkv`
+Element:  `release_group`
+Expected: `B-G & m.3.3.w`
+Got:      `B-G_&_m.3.3.w`
+
+Input:    `The.Animatrix.08.A.Detective.Story.720p.BluRay.DTS.x264-ESiR.mkv`
+Element:  `title`
+Expected: `The Animatrix`
+Got:      `The Animatrix 08 A Detective Story`
+
+Input:    `The.Animatrix.08.A.Detective.Story.720p.BluRay.DTS.x264-ESiR.mkv`
+Element:  `episode`
+Expected: `08`
+Got:      ``
+
+Input:    `The.Animatrix.08.A.Detective.Story.720p.BluRay.DTS.x264-ESiR.mkv`
+Element:  `episode_title`
+Expected: `A Detective Story`
+Got:      ``
+
+Input:    `[ReDone] Memories Off 3.5 - 04 (DVD 10-bit).mkv`
+Element:  `title`
+Expected: `Memories Off 3.5`
+Got:      `Memories Off`
+
+Input:    `[ReDone] Memories Off 3.5 - 04 (DVD 10-bit).mkv`
+Element:  `episode`
+Expected: `04`
+Got:      `3.5`
+
+Input:    `[ReDone] Memories Off 3.5 - 04 (DVD 10-bit).mkv`
+Element:  `episode_title`
+Expected: ``
+Got:      `04`
+
+Input:    `[FB] Crayon Shin-Chan Movie 2 The Secret of Buri Buri Kingdom [DivX5 AC3] 1994 [852X480] V2.avi`
+Element:  `year`
+Expected: `1994`
+Got:      ``
+
+Input:    `[5F] RWBY 14 Forever Fall Part 2 pt-BR.mp4`
+Element:  `title`
+Expected: `RWBY`
+Got:      `RWBY 14 Forever Fall`
+
+Input:    `[5F] RWBY 14 Forever Fall Part 2 pt-BR.mp4`
+Element:  `episode`
+Expected: `14`
+Got:      ``
+
+Input:    `[5F] RWBY 14 Forever Fall Part 2 pt-BR.mp4`
+Element:  `episode_title`
+Expected: `Forever Fall Part 2`
+Got:      ``
+
+Input:    `[5F] RWBY 14 Forever Fall Part 2 pt-BR.mp4`
+Element:  `part`
+Expected: ``
+Got:      `2`
+
+Input:    `[BM&T] Toradora! - 07v2 - Pool Opening [720p Hi10 ] [BD] [8F59F2BA]`
+Element:  `type`
+Expected: ``
+Got:      `Opening`
+
+Input:    `[(´• ω •`)] Nintama Rantarou - S23E1821 - Buddhist Priest-sama is a Ninja.mkv`
+Element:  `release_group`
+Expected: `(´• ω •`)`
+Got:      `´• ω •``
+
+Input:    `05 - Hidan no Aria - Butei Charter Article 1 - [UTW](E7724B68).mkv`
+Element:  `title`
+Expected: `Hidan no Aria`
+Got:      ``
+
+Input:    `05 - Hidan no Aria - Butei Charter Article 1 - [UTW](E7724B68).mkv`
+Element:  `episode_title`
+Expected: `Butei Charter Article 1`
+Got:      `Hidan no Aria - Butei Charter Article 1`
+
+Input:    `Piano no Mori 2 (TV)`
+Element:  `season`
+Expected: `2`
+Got:      ``
+
+Input:    `Piano no Mori 2 (TV)`
+Element:  `episode`
+Expected: ``
+Got:      `2`
+
+Input:    `Detective-Conan-656 Professor's Video Site (Part 1)`
+Element:  `episode_title`
+Expected: `Professor's Video Site (Part 1)`
+Got:      `Professor's Video Site`
+
+Input:    `Detective-Conan-656 Professor's Video Site (Part 1)`
+Element:  `part`
+Expected: ``
+Got:      `1`
+
+Input:    `The.Eminence.in.Shadow.S01E05.I.Am....1080p.BluRay.DD2.0.x265-ExCaLiBuR.mkv`
+Element:  `episode_title`
+Expected: `I Am...`
+Got:      `I Am`
+
+Input:    `[xPearse] Great Mazinger - Episode 55 Preview [English Sub] [480p].mkv`
+Element:  `episode_title`
+Expected: ``
+Got:      `Preview`
+
+Input:    `[Erai-raws] NieR-Automata Ver1_1a - 02 [1080p][Multiple Subtitle][5BCD4615].mkv`
+Element:  `title`
+Expected: `NieR-Automata Ver1_1a`
+Got:      `NieR-Automata Ver1 1a`
+
+Input:    `[Erai-raws] NieR-Automata Ver1_1a Part 2 - 03 [1080p][Multiple Subtitle][AAF0612D].mkv`
+Element:  `title`
+Expected: `NieR-Automata Ver1_1a`
+Got:      `NieR-Automata Ver1 1a`
+
+Input:    `Highschool.of.the.Dead.S00E01.v2.Drifters.of.the.Dead.1080p-Hi10p.BluRay.FLAC5.1.x264-CTR.[32FD04E5].mkv`
+Element:  `release_group`
+Expected: `CTR`
+Got:      ``
+
+Input:    `[CBM]_Monster_-_11_-_511_Kinderheim_[6C70C4E4].mkv`
+Element:  `title`
+Expected: `Monster`
+Got:      `Monster - 11`
+
+Input:    `[CBM]_Monster_-_11_-_511_Kinderheim_[6C70C4E4].mkv`
+Element:  `episode`
+Expected: `11`
+Got:      `511`
+
+Input:    `[CBM]_Monster_-_11_-_511_Kinderheim_[6C70C4E4].mkv`
+Element:  `episode_title`
+Expected: `511 Kinderheim`
+Got:      `Kinderheim`
+
+Input:    `Mahoutsukai Reimeiki E06v1.5 [1080p][AAC][JapDub][GerEngSub][Web-DL].mkv`
+Element:  `release_version`
+Expected: `1.5`
+Got:      `1`
+
+Input:    `Mahoutsukai Reimeiki E06v1.5 [1080p][AAC][JapDub][GerEngSub][Web-DL].mkv`
+Element:  `release_group`
+Expected: ``
+Got:      `GerEngSub`
+
+Input:    `[Erai-raws] Ranma 1-2 (2024) - 03 [1080p][Multiple Subtitle]`
+Element:  `title`
+Expected: `Ranma 1-2`
+Got:      `Ranma`
+
+Input:    `[Erai-raws] Ranma 1-2 (2024) - 03 [1080p][Multiple Subtitle]`
+Element:  `episode`
+Expected: `03`
+Got:      `1, 2`
+
+Input:    `[Genderbender] Ranma 1+2 (2024) - 01 [HEVC 1080p] [Dual Audio].mkv`
+Element:  `title`
+Expected: `Ranma 1+2`
+Got:      `Ranma`
+
+Input:    `[Genderbender] Ranma 1+2 (2024) - 01 [HEVC 1080p] [Dual Audio].mkv`
+Element:  `episode`
+Expected: `01`
+Got:      `1, 2`
+
+Input:    `Ranma.1-2.2024.S01E11.You.I.Love.1080p.NF.WEB-DL.AAC2.0.H.264.MULTi-VARYG.mkv`
+Element:  `title`
+Expected: `Ranma 1-2`
+Got:      `Ranma`
+
+Input:    `Ranma.1-2.2024.S01E11.You.I.Love.1080p.NF.WEB-DL.AAC2.0.H.264.MULTi-VARYG.mkv`
+Element:  `episode`
+Expected: `11`
+Got:      `1, 2, 11`
+
+Input:    `My.Hero.Academia.S04.P2.CRF-16.1080p.Blu-Ray.10-Bit.Dual-Audio.TrueHD.x265-iAHD`
+Element:  `episode`
+Expected: ``
+Got:      `16`
+
